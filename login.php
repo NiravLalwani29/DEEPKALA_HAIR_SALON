@@ -1,8 +1,104 @@
 <?php
 require 'backend/config.php';
+
+// Forgot-password OTP backend (AJAX from the popup below): action=send | verify
+if (in_array($_POST['action'] ?? '', ['send', 'verify'], true)) header('Content-Type: application/json');
+
+// Tiny Gmail SMTP client (no library needed). Returns true if Gmail accepted the mail.
+function smtp_send($to, $subject, $body) {
+    $s = @stream_socket_client('ssl://smtp.gmail.com:465', $en, $es, 10);
+    if (!$s) return false;
+    $cmd = function ($c, $ok) use ($s) {
+        if ($c !== null) fwrite($s, $c . "\r\n");
+        do { $l = fgets($s, 512); } while ($l !== false && isset($l[3]) && $l[3] === '-');
+        return $l !== false && strncmp($l, $ok, 3) === 0;
+    };
+    $msg = "From: Deepkala Hair Salon <" . SMTP_USER . ">\r\nTo: $to\r\nSubject: $subject\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n$body";
+    $ok = $cmd(null, '220') && $cmd('EHLO localhost', '250') && $cmd('AUTH LOGIN', '334')
+        && $cmd(base64_encode(SMTP_USER), '334') && $cmd(base64_encode(SMTP_PASS), '235')
+        && $cmd('MAIL FROM:<' . SMTP_USER . '>', '250') && $cmd("RCPT TO:<$to>", '250')
+        && $cmd('DATA', '354') && $cmd($msg . "\r\n.", '250');
+    fwrite($s, "QUIT\r\n"); fclose($s);
+    return $ok;
+}
+
+// JSON endpoint used by the forgot-password popup on login.php (action=send | verify)
+function out($ok, $msg = '', $extra = []) { echo json_encode(['ok' => $ok, 'msg' => $msg] + $extra); exit; }
+if (($_POST['action'] ?? '') === 'send') {
+    $email = strtolower(trim($_POST['email'] ?? ''));
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) out(false, 'Enter a valid email address.');
+    $st = mysqli_prepare($conn, "SELECT id FROM users WHERE email = ?");
+    mysqli_stmt_bind_param($st, 's', $email);
+    mysqli_stmt_execute($st);
+    $sent = true;
+    $exists = mysqli_fetch_assoc(mysqli_stmt_get_result($st));
+    $st = mysqli_prepare($conn, "SELECT 1 FROM password_resets WHERE email = ? AND expires > DATE_ADD(NOW(), INTERVAL 570 SECOND)");
+    mysqli_stmt_bind_param($st, 's', $email);
+    mysqli_stmt_execute($st);
+    $cooling = mysqli_fetch_assoc(mysqli_stmt_get_result($st));
+    if ($exists && !$cooling) {
+        $otp = (string) random_int(100000, 999999);
+        $h = password_hash($otp, PASSWORD_DEFAULT);
+        $st = mysqli_prepare($conn, "REPLACE INTO password_resets (email, otp_hash, expires, tries) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 10 MINUTE), 0)");
+        mysqli_stmt_bind_param($st, 'ss', $email, $h);
+        mysqli_stmt_execute($st);
+        // shortcut: with no SMTP configured the OTP goes to the PHP log; set SMTP_USER/SMTP_PASS in config.php for real mail
+        if (SMTP_PASS === '') error_log("Deepkala OTP for $email: $otp");
+        else $sent = smtp_send($email, 'Your Deepkala password reset OTP', "Your OTP is $otp. It is valid for 10 minutes.\nIf you did not request this, ignore this mail.");
+    }
+    if (!$sent) out(false, 'Could not send the email right now. Please try again later.');
+    $_SESSION['fp_email'] = $email;  // same reply whether or not the email exists
+    out(true);
+}
+
+if (($_POST['action'] ?? '') === 'verify') {
+    $email = $_SESSION['fp_email'] ?? '';
+    $otp = trim($_POST['otp'] ?? '');
+    $pw = $_POST['password'] ?? '';
+    if ($email === '') out(false, 'Session expired. Please request a new OTP.', ['restart' => true]);
+    if (!preg_match('/^\d{6}$/', $otp)) out(false, 'Enter the 6-digit OTP.');
+    if (strlen($pw) < 8 || !preg_match('/[A-Za-z]/', $pw) || !preg_match('/[0-9]/', $pw)) out(false, 'Password must be at least 8 characters with a letter and a number.');
+    if ($pw !== ($_POST['confirm'] ?? '')) out(false, 'Passwords do not match.');
+
+    $st = mysqli_prepare($conn, "SELECT otp_hash, tries, expires > NOW() AS live FROM password_resets WHERE email = ?");
+    mysqli_stmt_bind_param($st, 's', $email);
+    mysqli_stmt_execute($st);
+    $r = mysqli_fetch_assoc(mysqli_stmt_get_result($st));
+    if (!$r || !$r['live'] || $r['tries'] >= 5) out(false, 'OTP expired or too many wrong attempts. Please request a new one.', ['restart' => true]);
+    if (!password_verify($otp, $r['otp_hash'])) {
+        $st = mysqli_prepare($conn, "UPDATE password_resets SET tries = tries + 1 WHERE email = ?");
+        mysqli_stmt_bind_param($st, 's', $email);
+        mysqli_stmt_execute($st);
+        out(false, 'Wrong OTP.');
+    }
+    // login.php compares passwords in plain text, so store it the same way
+    $st = mysqli_prepare($conn, "UPDATE users SET password = ? WHERE email = ?");
+    mysqli_stmt_bind_param($st, 'ss', $pw, $email);
+    mysqli_stmt_execute($st);
+    $st = mysqli_prepare($conn, "DELETE FROM password_resets WHERE email = ?");
+    mysqli_stmt_bind_param($st, 's', $email);
+    mysqli_stmt_execute($st);
+    unset($_SESSION['fp_email']);
+
+    // OTP proved email ownership, so log the user straight in (same session keys as login.php)
+    $st = mysqli_prepare($conn, "SELECT * FROM users WHERE email = ?");
+    mysqli_stmt_bind_param($st, 's', $email);
+    mysqli_stmt_execute($st);
+    $u = mysqli_fetch_assoc(mysqli_stmt_get_result($st));
+    session_regenerate_id(true);
+    $_SESSION['user_id']    = $u['id'];
+    $_SESSION['user_name']  = $u['name'];
+    $_SESSION['user_phone'] = $u['phone'];
+    $_SESSION['user_email'] = $u['email'];
+    $_SESSION['membership'] = $u['membership'];
+    $redirect = $_POST['redirect'] ?? 'index.php';
+    if (strpos($redirect, '//') !== false || strpos($redirect, ':') !== false) $redirect = 'index.php';
+    out(true, '', ['redirect' => $redirect]);
+}
 $errors = [];
 $emailValue = '';
 $redirect = $_GET['redirect'] ?? 'index.php';
+if (strpos($redirect, '//') !== false || strpos($redirect, ':') !== false) $redirect = 'index.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $emailValue = trim($_POST['email'] ?? '');
@@ -173,21 +269,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     background: radial-gradient(ellipse at 60% 45%, rgba(201,166,107,0.10), transparent 65%); }
   .visual-col svg { width: 100%; max-width: 500px; height: auto; }
 
-  /* ===== Footer strip ===== */
-  .page-footer {
-    display: flex; align-items: center; gap: 8px;
-    padding: 18px 28px;
-    font-size: 0.7rem; color: var(--hairline);
-  }
-  .page-footer a { color: var(--hairline); text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
-  .page-footer a:hover { color: var(--accent); }
 
   /* ===== Responsive: visual drops away on tablet/mobile ===== */
   @media (max-width: 860px) {
     .page { grid-template-columns: 1fr; }
     .visual-col { display: none; }
-    .page-footer { justify-content: center; }
   }
+  .back-link { display: inline-block; margin-bottom: 22px; font-size: 0.78rem; color: var(--muted); text-decoration: none; }
+  .back-link:hover { color: var(--accent); }
+  .forgot { display: block; text-align: right; margin: -4px 0 4px; font-size: 0.74rem; color: var(--accent); text-decoration: none; }
+  .forgot:hover { text-decoration: underline; }
+  .modal-bg { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(10,8,5,.55); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+  .modal-bg[hidden] { display: none; }
+  .modal { width: 100%; max-width: 360px; background: var(--panel); border: 1px solid var(--hairline); border-radius: 14px; padding: 26px 22px; }
+  .modal h2 { font-family: 'Playfair Display', serif; font-size: 1.3rem; margin-bottom: 8px; }
+  .modal p { font-size: .78rem; color: var(--muted); margin-bottom: 18px; }
+  .modal input { width: 100%; padding: 14px 16px; margin-bottom: 8px; border-radius: 10px; border: 1px solid transparent; background: var(--field); color: var(--ink); font-size: .9rem; font-family: inherit; }
+  .modal input:focus { outline: none; border-color: var(--accent); }
+  @keyframes fpFade { from { opacity: 0; backdrop-filter: blur(0); -webkit-backdrop-filter: blur(0); } }
+  @keyframes fpPop { from { opacity: 0; transform: translateY(18px) scale(.94); } 60% { transform: translateY(-3px) scale(1.01); } }
+  .modal-bg { animation: fpFade .3s ease; }
+  .modal { animation: fpPop .4s cubic-bezier(.2,.8,.3,1); }
+  #resetFields { animation: fpPop .4s ease; }
+  @media (prefers-reduced-motion: reduce) { .modal-bg, .modal, #resetFields { animation: none; } }
+  [hidden] { display: none !important; }
 </style>
 </head>
 <body>
@@ -197,6 +302,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <!-- ============ LEFT: FORM AREA ============ -->
   <main class="form-col">
     <div class="form-wrap">
+      <a class="back-link" href="<?php echo htmlspecialchars($redirect); ?>">&larr; Back to site</a>
       <h1>Welcome to Deepkala</h1>
       <p class="signup-line">Don't have an account? <a href="signup.php?redirect=<?php echo urlencode($redirect); ?>">Sign up</a></p>
 
@@ -204,9 +310,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="error"><?php echo htmlspecialchars($errors['general']); ?></div>
       <?php } ?>
 
-      <form method="POST" action="login.php" novalidate>
+      <form method="POST" action="login.php" id="loginForm" novalidate>
         <input type="hidden" name="redirect" value="<?php echo htmlspecialchars($redirect); ?>">
 
+        <div id="loginFields">
         <div class="field-group">
           <input type="email" id="email" name="email" placeholder="Email" aria-label="Email" autocomplete="email"
                  value="<?php echo htmlspecialchars($emailValue); ?>"
@@ -225,7 +332,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <?php } ?>
         </div>
 
-        <button type="submit" class="btn-primary">Log in</button>
+        <a class="forgot" href="#" id="fpOpen">Forgot password?</a>
+        </div>
+
+        <div id="resetFields" hidden>
+          <p class="signup-line" id="resetInfo"></p>
+          <div class="field-group"><input type="text" id="fpOtp" placeholder="6-digit OTP" inputmode="numeric" maxlength="6" autocomplete="one-time-code"></div>
+          <div class="field-group"><input type="password" id="fpPw" placeholder="New password" autocomplete="new-password"></div>
+          <div class="field-group"><input type="password" id="fpPw2" placeholder="Confirm password" autocomplete="new-password"></div>
+          <div class="error" id="resetErr" hidden></div>
+          <a class="forgot" href="#" id="fpResend">Resend OTP</a>
+        </div>
+        <button type="submit" class="btn-primary" id="mainBtn">Log in</button>
+        <a class="forgot" href="#" id="resetCancel" style="text-align:center;margin-top:14px" hidden>Back to login</a>
       </form>
 
       <div class="divider">Or</div>
@@ -245,10 +364,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   </main>
 
   <!-- ============ RIGHT: VISUAL ELEMENT ============ -->
-  <!-- PROJECT-SPECIFIC VISUAL SUBSTITUTION:
-       Reference had a tilted bank card + floating metal coins.
-       Here: a static salon scene. Arched gold-framed mirror, leather barber chair,
-       pendant lamp glow, striped barber pole, product shelf and no emblem. -->
   <aside class="visual-col" aria-hidden="true">
     <svg viewBox="0 0 480 550" xmlns="http://www.w3.org/2000/svg">
       <defs>
@@ -375,15 +490,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 </div>
 
-<!-- ============ FOOTER ============ -->
-<!-- <footer class="page-footer">
-  <span>Deepkala Hair Salon</span>
-  <span>·</span>
-  <a href="<?php echo htmlspecialchars($redirect); ?>">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg>
-    Back to site
-  </a>
-</footer> -->
+<!-- Forgot-password popup -->
+<div class="modal-bg" id="fpModal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="fpTitle">
+    <h2 id="fpTitle">Reset password</h2>
+    <p>Enter your account email and we'll send you a 6-digit OTP.</p>
+    <div class="error" id="fpErr" hidden></div>
+    <input type="email" id="fpEmail" placeholder="Email" autocomplete="email">
+    <button type="button" class="btn-primary" id="fpSend">Send OTP</button>
+    <a class="forgot" href="#" id="fpClose" style="text-align:center;margin-top:14px">Cancel</a>
+  </div>
+</div>
+
 
 <script>
   // Demo-only social buttons: no real sign-in, just a notice
@@ -406,6 +524,67 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       input.type = show ? 'text' : 'password';
       btn.textContent = show ? 'Hide' : 'Show';
       btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+    });
+  })();
+  // Forgot password: popup (email) -> login form swaps to OTP / new password / confirm -> verified = logged in
+  (function () {
+    var $ = function (id) { return document.getElementById(id); };
+    var modal = $('fpModal'), form = $('loginForm'), mode = 'login', mail, timer;
+    function post(data) {
+      var body = new URLSearchParams(data);
+      return fetch('login.php', { method: 'POST', body: body }).then(function (r) { return r.json(); });
+    }
+    function show(el, msg) { el.textContent = msg; el.hidden = !msg; }
+    function setMode(m) {
+      mode = m;
+      var reset = m === 'reset';
+      $('loginFields').hidden = reset;
+      $('resetFields').hidden = !reset;
+      $('resetCancel').hidden = !reset;
+      $('mainBtn').textContent = reset ? 'Verify & Log in' : 'Log in';
+      show($('resetErr'), '');
+    }
+    $('fpOpen').addEventListener('click', function (e) { e.preventDefault(); show($('fpErr'), ''); $('fpEmail').value = $('email').value; modal.hidden = false; $('fpEmail').focus(); });
+    $('fpClose').addEventListener('click', function (e) { e.preventDefault(); modal.hidden = true; });
+    $('resetCancel').addEventListener('click', function (e) { e.preventDefault(); setMode('login'); });
+    // 30s wait between OTP mails (server enforces it too)
+    function cool(n) {
+      var a = $('fpResend');
+      clearTimeout(timer);
+      a.dataset.wait = n > 0 ? 1 : '';
+      a.textContent = n > 0 ? 'Resend OTP in ' + n + 's' : 'Resend OTP';
+      if (n > 0) timer = setTimeout(function () { cool(n - 1); }, 1000);
+    }
+    $('fpResend').addEventListener('click', function (e) {
+      e.preventDefault();
+      if (this.dataset.wait) return;
+      post({ action: 'send', email: mail }).then(function (d) {
+        if (!d.ok) return show($('resetErr'), d.msg);
+        show($('resetErr'), '');
+        $('resetInfo').textContent = 'A new OTP was sent to ' + mail + '. Valid for 10 minutes.';
+        cool(30);
+      }).catch(function () { show($('resetErr'), 'Network error. Try again.'); });
+    });
+    $('fpSend').addEventListener('click', function () {
+      var email = $('fpEmail').value.trim();
+      post({ action: 'send', email: email }).then(function (d) {
+        if (!d.ok) return show($('fpErr'), d.msg);
+        modal.hidden = true;
+        mail = email;
+        cool(30);
+        $('resetInfo').textContent = 'If ' + email + ' has an account, an OTP was sent. Valid for 10 minutes.';
+        setMode('reset');
+        $('fpOtp').focus();
+      }).catch(function () { show($('fpErr'), 'Network error. Try again.'); });
+    });
+    form.addEventListener('submit', function (e) {
+      if (mode !== 'reset') return;
+      e.preventDefault();
+      post({ action: 'verify', otp: $('fpOtp').value, password: $('fpPw').value, confirm: $('fpPw2').value, redirect: form.redirect.value }).then(function (d) {
+        if (d.ok) location.href = d.redirect;
+        else if (d.restart) { setMode('login'); show($('fpErr'), d.msg); modal.hidden = false; }
+        else show($('resetErr'), d.msg);
+      }).catch(function () { show($('resetErr'), 'Network error. Try again.'); });
     });
   })();
 </script>

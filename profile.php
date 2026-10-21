@@ -73,7 +73,7 @@ while ($r = mysqli_fetch_assoc($res)) {
 $walletBal = (int) (mysqli_fetch_assoc(mysqli_query($conn, "SELECT wallet FROM users WHERE id = $uid"))['wallet'] ?? 0);
 $txns = [];
 $tr = mysqli_query($conn, "SELECT w.*, a.service FROM wallet_txn w LEFT JOIN appointments a ON a.id = w.appointment_id
-                           WHERE w.user_id = $uid ORDER BY w.id DESC LIMIT 30");
+                           WHERE w.user_id = $uid ORDER BY w.id DESC LIMIT 100");
 while ($t = mysqli_fetch_assoc($tr)) {
     $txns[] = [
         'type' => $t['type'], 'amount' => (int) $t['amount'], 'reason' => $t['reason'],
@@ -455,6 +455,7 @@ $profileData = [
     .pf-appt-amount { font-size: 1rem; font-weight: 700; color: var(--text-ink); }
     .pf-appt-actions { grid-column: 1 / -1; padding-top: 14px; border-top: 1px solid rgba(122, 108, 85, 0.45); }
     .pf-more { display: flex; margin: 16px auto 0; }
+    .pf-capped.is-open { max-height: 480px; overflow-y: auto; padding-right: 6px; scrollbar-width: thin; scrollbar-color: #A9884C transparent; }
 
     /* Status chips (same shape as .dk-member-badge) */
     .pf-chip { display: inline-block; padding: 3px 9px; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; border-radius: 4px; white-space: nowrap; }
@@ -1188,9 +1189,9 @@ $profileData = [
     (function () {
       'use strict';
       const D = <?php echo json_encode($profileData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
-      const HISTORY_PREVIEW = 5;
+      const PREVIEW = 5;
       const WHATSAPP_NUMBER = '919924620958';
-      let showAllHistory = false;
+      const showAll = {};  // per list: expanded into a scroll box?
       let lastFocus = null;
       let noticeTimer = null;
 
@@ -1258,11 +1259,15 @@ $profileData = [
       }
       function renderHistory(list) {
         if (!list.length) return '<div class="pf-card pf-empty"><p>Your completed visits will appear here.</p></div>';
-        const visible = showAllHistory ? list : list.slice(0, HISTORY_PREVIEW);
-        let html = '<ul class="pf-list">' + visible.map((a) => renderAppointment(a, false)).join('') + '</ul>';
-        if (list.length > HISTORY_PREVIEW) {
-          html += '<button type="button" class="pf-btn pf-btn-outline pf-more" data-action="toggle-history" aria-expanded="' + showAllHistory + '">' +
-            (showAllHistory ? 'Show fewer visits' : 'Show all ' + list.length + ' visits') + '</button>';
+        return capped('history', list.map((a) => renderAppointment(a, false)), '');
+      }
+      // First PREVIEW rows, then "Load more" opens the rest inside a fixed-height scroll box instead of stretching the page
+      function capped(key, rows, style) {
+        const open = showAll[key];
+        let html = '<div class="pf-capped' + (open ? ' is-open' : '') + '"><ul class="pf-list"' + style + '>' + (open ? rows : rows.slice(0, PREVIEW)).join('') + '</ul></div>';
+        if (rows.length > PREVIEW) {
+          html += '<button type="button" class="pf-btn pf-btn-outline pf-more" data-action="toggle-' + key + '" aria-expanded="' + !!open + '">' +
+            (open ? 'Show fewer' : 'Load more (' + (rows.length - PREVIEW) + ' more)') + '</button>';
         }
         return html;
       }
@@ -1285,14 +1290,14 @@ $profileData = [
         const tx = D.txns || [];
         let h = '<div class="pf-card"><p class="pf-card-title">Balance</p><p class="pf-stat-value" style="margin:6px 0 4px">' + money(D.wallet || 0) + '</p><p class="pf-card-text">Refunds land here. Tick &ldquo;Use wallet&rdquo; at checkout on your next booking.</p></div>';
         if (tx.length) {
-          h += '<ul class="pf-list" style="margin-top:12px">' + tx.map((t) => {
+          h += capped('wallet', tx.map((t) => {
             const cr = t.type === 'credit';
             return '<li class="pf-appt" style="grid-template-columns:1fr auto"><div>' +
               '<h3 class="pf-appt-service">' + (cr ? 'Refund received' : 'Used for booking') + '</h3>' +
               '<p class="pf-appt-meta">' + esc(fmtDate(new Date(t.ts))) + (t.service ? ' &middot; ' + esc(t.service) : '') + (t.appt ? ' &middot; Appt #' + t.appt : '') + '</p>' +
               '<p class="pf-appt-meta is-faint">' + esc(t.reason || '') + '</p></div>' +
               '<span class="pf-appt-amount" style="color:' + (cr ? '#6EB478' : '#E0665A') + '">' + (cr ? '+' : '&minus;') + money(t.amount) + '</span></li>';
-          }).join('') + '</ul>';
+          }), ' style="margin-top:12px"');
         } else {
           h += '<div class="pf-card pf-empty" style="margin-top:12px"><p>No wallet activity yet.</p></div>';
         }
@@ -1449,10 +1454,10 @@ $profileData = [
         if (!el) return;
         const action = el.dataset.action;
         if (action === 'edit') openEdit();
-        else if (action === 'toggle-history') {
-          showAllHistory = !showAllHistory;
+        else if (action.startsWith('toggle-')) {
+          showAll[action.slice(7)] = !showAll[action.slice(7)];
           render();
-          const btn = document.querySelector('[data-action="toggle-history"]');
+          const btn = document.querySelector('[data-action="' + action + '"]');
           if (btn) btn.focus();
         } else if (action === 'u-cancel' || action === 'u-resched') {
           askAction(action, el.dataset.id);

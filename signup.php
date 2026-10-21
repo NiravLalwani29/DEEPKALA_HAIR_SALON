@@ -205,23 +205,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     background: radial-gradient(ellipse at 60% 45%, rgba(201,166,107,0.10), transparent 65%); }
   .visual-col svg { width: 100%; max-width: 500px; height: auto; }
 
-  /* ===== Footer strip ===== */
-  .page-footer {
-    display: flex; align-items: center; gap: 8px;
-    padding: 18px 28px;
-    font-size: 0.7rem; color: var(--hairline);
-  }
-  .page-footer a { color: var(--hairline); text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
-  .page-footer a:hover { color: var(--accent); }
 
   /* ===== Responsive: visual drops away on tablet/mobile ===== */
   @media (max-width: 860px) {
     .page { grid-template-columns: 1fr; }
     .visual-col { display: none; }
-    .page-footer { justify-content: center; }
   }
   .hint { display: block; font-size: 0.72rem; color: var(--hairline); margin-top: 5px; }
   .form-wrap { max-width: 350px; }
+  .back-link { display: inline-block; margin-bottom: 22px; font-size: 0.78rem; color: var(--muted); text-decoration: none; }
+  .back-link:hover { color: var(--accent); }
 </style>
 
 </head>
@@ -232,6 +225,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
   <!-- ============ LEFT: FORM AREA ============ -->
   <main class="form-col">
     <div class="form-wrap">
+      <a class="back-link" href="index.php">&larr; Back to site</a>
       <h1>Create your account</h1>
       <p class="signup-line">Already have an account? <a href="login.php?redirect=<?php echo urlencode($redirect); ?>">Log in</a></p>
 
@@ -275,10 +269,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
   </main>
 
   <!-- ============ RIGHT: VISUAL ELEMENT ============ -->
-  <!-- PROJECT-SPECIFIC VISUAL SUBSTITUTION:
-       Reference had a tilted bank card + floating metal coins.
-       Here: a static salon scene. Arched gold-framed mirror, leather barber chair,
-       pendant lamp glow, striped barber pole, product shelf and no emblem. -->
   <aside class="visual-col" aria-hidden="true">
     <svg viewBox="0 0 480 550" xmlns="http://www.w3.org/2000/svg">
       <defs>
@@ -405,15 +395,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 </div>
 
-<!-- ============ FOOTER ============ -->
-<!-- <footer class="page-footer">
-  <span>Deepkala Hair Salon</span>
-  <span>·</span>
-  <a href="<?php echo htmlspecialchars($redirect); ?>">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg>
-    Back to site
-  </a>
-</footer> -->
 
 <script>
   // Show/hide password toggle
