@@ -6,6 +6,12 @@ if (in_array($_POST['action'] ?? '', ['send', 'verify'], true)) header('Content-
 
 // Tiny Gmail SMTP client (no library needed). Returns true if Gmail accepted the mail.
 function smtp_send($to, $subject, $body) {
+    // HTTPS relay (Google Apps Script) works on any network; college Wi-Fi usually blocks SMTP ports 465/587
+    if (MAIL_URL !== '') {
+        $r = @file_get_contents(MAIL_URL . '?' . http_build_query(['key' => MAIL_KEY, 'to' => $to, 'subject' => $subject, 'body' => $body]),
+            false, stream_context_create(['http' => ['timeout' => 15]]));
+        return $r !== false && trim($r) === 'ok';
+    }
     $s = @stream_socket_client('ssl://smtp.gmail.com:465', $en, $es, 10);
     if (!$s) return false;
     $cmd = function ($c, $ok) use ($s) {
@@ -43,7 +49,7 @@ if (($_POST['action'] ?? '') === 'send') {
         mysqli_stmt_bind_param($st, 'ss', $email, $h);
         mysqli_stmt_execute($st);
         // shortcut: with no SMTP configured the OTP goes to the PHP log; set SMTP_USER/SMTP_PASS in config.php for real mail
-        if (SMTP_PASS === '') error_log("Deepkala OTP for $email: $otp");
+        if (MAIL_URL === '' && SMTP_PASS === '') error_log("Deepkala OTP for $email: $otp");
         else $sent = smtp_send($email, 'Your Deepkala password reset OTP', "Your OTP is $otp. It is valid for 10 minutes.\nIf you did not request this, ignore this mail.");
     }
     if (!$sent) out(false, 'Could not send the email right now. Please try again later.');
@@ -191,9 +197,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     margin-bottom: 10px;
   }
   .signup-line { font-size: 0.78rem; color: var(--muted); margin-bottom: 28px; }
-  .signup-line a, .foot-note a { color: var(--accent); text-decoration: none; font-weight: 600; }
-  .signup-line a:hover, .foot-note a:hover { text-decoration: underline; }
-
+  .signup-line a{ color: var(--accent); text-decoration: none; font-weight: 600; }  .signup-line a:hover{ text-decoration: underline; }
   .error {
     background: rgba(224,102,90,0.12);
     border: 1px solid var(--danger);
@@ -262,7 +266,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   .btn-secondary svg { flex-shrink: 0; }
   .demo-note { font-size: 0.74rem; color: var(--muted); text-align: center; margin: 2px 0 4px; }
 
-  .foot-note { text-align: center; margin-top: 22px; font-size: 0.75rem; color: var(--hairline); }
 
   /* ===== Right: visual column ===== */
   .visual-col { display: flex; align-items: center; justify-content: center; padding: 24px; overflow: hidden;
@@ -344,7 +347,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <a class="forgot" href="#" id="fpResend">Resend OTP</a>
         </div>
         <button type="submit" class="btn-primary" id="mainBtn">Log in</button>
-        <a class="forgot" href="#" id="resetCancel" style="text-align:center;margin-top:14px" hidden>Back to login</a>
       </form>
 
       <div class="divider">Or</div>
@@ -540,13 +542,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       var reset = m === 'reset';
       $('loginFields').hidden = reset;
       $('resetFields').hidden = !reset;
-      $('resetCancel').hidden = !reset;
       $('mainBtn').textContent = reset ? 'Verify & Log in' : 'Log in';
       show($('resetErr'), '');
     }
     $('fpOpen').addEventListener('click', function (e) { e.preventDefault(); show($('fpErr'), ''); $('fpEmail').value = $('email').value; modal.hidden = false; $('fpEmail').focus(); });
     $('fpClose').addEventListener('click', function (e) { e.preventDefault(); modal.hidden = true; });
-    $('resetCancel').addEventListener('click', function (e) { e.preventDefault(); setMode('login'); });
     // 30s wait between OTP mails (server enforces it too)
     function cool(n) {
       var a = $('fpResend');

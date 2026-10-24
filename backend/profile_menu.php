@@ -30,8 +30,6 @@
     <div class="dk-profile-menu" id="dkProfileMenu">
       <div class="dk-profile-menu-head">Signed in as<br><strong><?php echo htmlspecialchars($_SESSION['user_name']); ?></strong></div>
       <a href="profile.php">My Profile</a>
-      <!-- <a href="profile.php#upcoming">Upcoming Appointments</a>
-      <a href="profile.php#past">Past Appointments</a> -->
       <a href="logout.php" class="dk-profile-logout">Logout</a>
     </div>
   </div>

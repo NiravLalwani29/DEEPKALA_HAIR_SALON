@@ -127,18 +127,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     margin-bottom: 10px;
   }
   .signup-line { font-size: 0.78rem; color: var(--muted); margin-bottom: 28px; }
-  .signup-line a, .foot-note a { color: var(--accent); text-decoration: none; font-weight: 600; }
-  .signup-line a:hover, .foot-note a:hover { text-decoration: underline; }
-
-  .error {
-    background: rgba(224,102,90,0.12);
-    border: 1px solid var(--danger);
-    color: var(--danger);
-    padding: 10px 12px;
-    border-radius: 8px;
-    font-size: 0.82rem;
-    margin-bottom: 16px;
-  }
+  .signup-line a{ color: var(--accent); text-decoration: none; font-weight: 600; }  .signup-line a:hover{ text-decoration: underline; }
 
   .field-group { margin-bottom: 12px; position: relative; }
   .field-group input {
@@ -198,7 +187,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
   .btn-secondary svg { flex-shrink: 0; }
   .demo-note { font-size: 0.74rem; color: var(--muted); text-align: center; margin: 2px 0 4px; }
 
-  .foot-note { text-align: center; margin-top: 22px; font-size: 0.75rem; color: var(--hairline); }
 
   /* ===== Right: visual column ===== */
   .visual-col { display: flex; align-items: center; justify-content: center; padding: 24px; overflow: hidden;
@@ -211,7 +199,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     .page { grid-template-columns: 1fr; }
     .visual-col { display: none; }
   }
-  .hint { display: block; font-size: 0.72rem; color: var(--hairline); margin-top: 5px; }
   .form-wrap { max-width: 350px; }
   .back-link { display: inline-block; margin-bottom: 22px; font-size: 0.78rem; color: var(--muted); text-decoration: none; }
   .back-link:hover { color: var(--accent); }

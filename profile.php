@@ -146,7 +146,6 @@ $profileData = [
 
     .font-serif { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; /* ← FONT-FAMILY UPDATED */ }
     h1.font-serif { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; /* ← FONT-FAMILY UPDATED */ font-variation-settings: "opsz" 144, "SOFT" 0, "WONK" 0; }
-    .font-sans { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; /* ← FONT-FAMILY UPDATED */ }
 
     /* Header (shared) */
     .site-header { position: sticky; top: 0; z-index: 100; background-color: rgba(21, 19, 14, 0.95); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border-hairline); transition: padding 0.3s ease, box-shadow 0.3s ease; }
@@ -184,155 +183,13 @@ $profileData = [
     .page-hero h1 { font-size: clamp(2.2rem, 4vw, 3.2rem); font-weight: 700; color: var(--text-ink); margin-bottom: 12px; }
     .page-hero p { font-size: 1rem; color: #B3AA98; max-width: 620px; margin: 0 auto; }
 
-    .seal-motif { display: inline-flex; align-items: center; justify-content: center; position: relative; width: 48px; height: 48px; margin-bottom: 12px; }
-    .seal-motif .ring-outer { position: absolute; inset: 0; border: 1px solid var(--bronze-taupe); border-radius: 50%; opacity: 0.7; }
-    .seal-motif .ring-inner { position: absolute; inset: 5px; border: 1px dashed var(--rose-deep); border-radius: 50%; opacity: 0.8; }
-    .seal-motif .seal-text { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; /* ← FONT-FAMILY UPDATED */ font-weight: 700; font-size: 1.1rem; color: var(--text-ink); }
 
     .eyebrow-tag { display: inline-block; background-color: var(--text-ink); color: var(--bg-cream); padding: 6px 14px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; }
     .category-header { display: flex; align-items: center; gap: 16px; margin-top: 48px; margin-bottom: 16px; }
     .category-header .hairline { flex: 1; height: 1px; background-color: var(--border-hairline); }
 
-    /* Footer */
-    .site-footer {
-      position: relative;
-      margin: 20px 12px 12px;
-      color: var(--text-ink, #F3EEE2);
-    }
-
-    /* Footer panel in the site's dark palette */
-    .footer-panel {
-      position: relative;
-      overflow: hidden;
-      background: #1A1710;
-      border: 1px solid var(--border-hairline, #7A6C55);
-      border-radius: 28px;
-      padding: 40px clamp(14px, 4.5vw, 64px) 0;
-    }
-    .footer-card {
-      max-width: 1560px;
-      margin: 0 auto;
-      padding: 44px clamp(56px, 6vw, 110px) 28px;
-      background: var(--card-cream, #221E17);
-      border: 1px solid var(--border-hairline, #7A6C55);
-      border-radius: 22px;
-      box-shadow: 0 28px 60px -26px rgba(0,0,0,0.65);
-    }
-    .footer-top {
-      display: flex;
-      justify-content: space-between;
-      gap: 48px;
-    }
-    .footer-brand { flex: 1 1 320px; max-width: 470px; }
-    .site-footer .brand-logo { gap: 14px; }
-    .site-footer .brand-logo img { width: 52px; height: 52px; }
-    .site-footer .logo-text-title { font-size: 1.55rem; }
-    .site-footer .logo-text-sub { font-size: 0.74rem; }
-    .footer-brand-desc {
-      margin-top: 18px;
-      font-size: 1.05rem;
-      line-height: 1.65;
-      color: #B3AA98;
-    }
-    .footer-social { display: flex; gap: 20px; margin-top: 18px; }
-    .footer-social svg { width: 27px; height: 27px; }
-    .footer-social a {
-      display: inline-flex;
-      color: var(--text-ink, #F3EEE2);
-      transition: color 0.2s ease, transform 0.2s ease;
-    }
-    .footer-social a:hover { color: var(--rose-accent, #C9A66B); transform: translateY(-2px); }
-
-    .footer-cols { display: flex; flex: 0 1 auto; gap: clamp(36px, 6vw, 120px); }
-    .footer-col-title {
-      margin-bottom: 16px;
-      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; /* ← FONT-FAMILY UPDATED */
-      font-size: 1.02rem;
-      font-weight: 700;
-      white-space: nowrap;
-      color: var(--text-ink, #F3EEE2);
-    }
-    .footer-list { list-style: none; display: flex; flex-direction: column; gap: 16px; }
-    .footer-list li, .footer-list a { font-size: 0.92rem; line-height: 1.45; color: #B3AA98; }
-    .footer-list a { white-space: nowrap; transition: color 0.2s ease; }
-    .footer-list a:hover { color: var(--rose-accent, #C9A66B); }
-    .footer-col-info { min-width: 0; max-width: 250px; }
-
-    .footer-bottom {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px 24px;
-      margin-top: 32px;
-      padding-top: 20px;
-      border-top: 1px solid var(--border-hairline, #7A6C55);
-      font-size: 0.85rem;
-      color: #9C9284;
-    }
-    .footer-legal { display: flex; flex-wrap: wrap; gap: 8px 24px; }
-    .footer-legal a { color: #9C9284; text-decoration: none; transition: color 0.2s ease; }
-    .footer-legal a:hover { color: var(--rose-accent, #C9A66B); }
-
-    .site-footer a:focus-visible { outline: 2px solid var(--rose-accent, #C9A66B); outline-offset: 3px; border-radius: 4px; }
-
-    /* Oversized brand name that fades into the panel */
-    .footer-watermark {
-      margin-top: 12px;
-      height: 0.62em;
-      overflow: hidden;
-      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; /* ← FONT-FAMILY UPDATED */
-      font-size: clamp(48px, 13vw, 220px);
-      font-weight: 800;
-      line-height: 1;
-      letter-spacing: 0.04em;
-      text-align: center;
-      white-space: nowrap;
-      color: rgba(201,166,107,0.08);
-      background: linear-gradient(180deg, rgba(201,166,107,0.20) 0%, rgba(201,166,107,0.02) 100%);
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
-      user-select: none;
-      pointer-events: none;
-    }
-
-    @media (min-width: 1600px) {
-      .site-footer .brand-logo img { width: 60px; height: 60px; }
-      .site-footer .logo-text-title { font-size: 1.95rem; }
-      .footer-brand { max-width: 540px; }
-      .footer-brand-desc { font-size: 1.18rem; }
-      .footer-col-title { font-size: 1.12rem; }
-      .footer-list li, .footer-list a { font-size: 1.02rem; }
-      .footer-col-info { max-width: 290px; }
-      .footer-social svg { width: 31px; height: 31px; }
-      .footer-bottom { font-size: 0.92rem; }
-    }
-    @media (max-width: 1180px) {
-      .footer-card { padding: 32px 28px 20px; }
-      .footer-top { flex-direction: column; gap: 44px; }
-      .footer-brand { flex: none; max-width: 520px; }
-    }
-    @media (max-width: 640px) {
-      .footer-panel { border-radius: 22px; padding-top: 18px; }
-      .footer-card { border-radius: 18px; padding: 20px 16px 12px; }
-      .footer-brand-desc { font-size: 1rem; }
-      .footer-top { gap: 24px; }
-      .site-footer .brand-logo img { width: 42px; height: 42px; }
-      .footer-social { margin-top: 12px; }
-      .footer-social svg { width: 22px; height: 22px; }
-      .footer-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 16px; }
-      .footer-col-title { margin-bottom: 8px; }
-      .footer-list { gap: 8px; }
-      .footer-col-info { grid-column: 1 / -1; max-width: none; }
-      .footer-list a { white-space: normal; }
-      .footer-bottom { flex-direction: column; align-items: flex-start; gap: 8px 16px; margin-top: 16px; padding-top: 12px; }
-      .footer-watermark { height: 0.4em; margin-top: 4px; font-size: clamp(30px, 11vw, 220px); }
-    }
-    @media (max-width: 420px) {
-      .footer-watermark { display: none; }
-    }
-
+    /* keep footer at page bottom on short pages */
+    main { flex: 1 0 auto; }
     .whatsapp-float { position: fixed; bottom: max(20px, env(safe-area-inset-bottom, 20px)); right: max(20px, env(safe-area-inset-right, 20px)); width: 52px; height: 52px; background-color: var(--whatsapp-green); color: #15130E; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(37,211,102,0.35); z-index: 999; transition: transform 0.2s ease; }
     .whatsapp-float:hover { transform: scale(1.08) translateY(-2px); }
 
@@ -350,21 +207,9 @@ $profileData = [
       .mobile-menu-cta { display: block; margin-top: 8px; }
     }
 
-    /* ===== Deepkala Membership & Auth (shared) ===== */
-    .dk-auth-slot { display: flex; align-items: center; }
-    .dk-login-link { font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-ink); border: 1px solid var(--border-hairline); padding: 9px 16px; border-radius: 4px; transition: all 0.2s ease; white-space: nowrap; }
-    .dk-login-link:hover { border-color: var(--rose-accent); color: var(--rose-accent); }
-    .dk-account-pill { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-    .dk-account-name { font-size: 0.8rem; font-weight: 600; color: var(--text-ink); white-space: nowrap; }
     .dk-member-badge { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; padding: 3px 9px; border-radius: 4px; white-space: nowrap; }
     .dk-badge-silver { background-color: rgba(201,166,107,0.15); color: #C9A66B; border: 1px solid rgba(201,166,107,0.4); }
     .dk-badge-gold { background-color: rgba(255,214,102,0.15); color: #FFD666; border: 1px solid rgba(255,214,102,0.45); }
-    .dk-logout-btn { background: none; border: none; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--bronze-taupe); cursor: pointer; padding: 4px; }
-    .dk-logout-btn:hover { color: var(--rose-accent); }
-    /* Profile entry points: account-pill icon link (desktop) and nav drawer item (mobile) */
-    .dk-account-pill { flex-wrap: nowrap; }
-    .dk-profile-link { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 24px; height: 24px; color: var(--rose-accent); transition: color 0.2s ease; }
-    .dk-profile-link:hover { color: var(--text-ink); }
     .dk-nav-profile { display: none; }
     @media (max-width: 860px) { .dk-nav-profile { display: block; } }
     .nav-member-badge { margin-left: 8px; font-size: 0.55rem !important; padding: 2px 7px !important; vertical-align: middle; }
@@ -393,17 +238,10 @@ $profileData = [
     .pf-btn-outline { background-color: transparent; color: var(--text-ink); border-color: var(--border-hairline); }
     .pf-btn-outline:hover { background-color: transparent; border-color: var(--rose-accent); color: var(--rose-accent); }
     .pf-btn-block { width: 100%; }
-    .pf-link { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--rose-accent); transition: color 0.2s ease; }
-    .pf-link:hover { color: var(--text-ink); }
 
     /* Notice banner (mirrors .member-status-bar) */
     .pf-notice { margin-top: 32px; padding: 14px 20px; background-color: var(--card-cream); border: 1px solid var(--rose-accent); color: #E4DCC8; font-size: 0.9rem; }
 
-    /* Signed-out gate */
-    .pf-gate { max-width: 560px; margin: 56px auto 0; padding: 44px 32px; text-align: center; background-color: var(--card-white); border: 1px solid var(--border-hairline); }
-    .pf-gate h2 { font-size: 1.6rem; font-weight: 700; margin-bottom: 10px; }
-    .pf-gate p { color: #B3AA98; font-size: 0.95rem; margin-bottom: 26px; }
-    .pf-gate-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; }
 
     /* Summary card */
     .pf-summary { display: flex; align-items: center; gap: 28px; margin-top: 40px; padding: 32px; background-color: var(--card-white); border: 1px solid var(--border-hairline); }
@@ -461,7 +299,6 @@ $profileData = [
     .pf-chip { display: inline-block; padding: 3px 9px; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; border-radius: 4px; white-space: nowrap; }
     .pf-chip-confirmed { background-color: rgba(201, 166, 107, 0.15); color: #C9A66B; border: 1px solid rgba(201, 166, 107, 0.4); }
     .pf-chip-done { background-color: rgba(243, 238, 226, 0.06); color: #9C9284; border: 1px solid rgba(243, 238, 226, 0.18); }
-    .pf-chip-expired { background-color: rgba(255, 107, 96, 0.12); color: #FF8A80; border: 1px solid rgba(255, 107, 96, 0.4); }
     .pf-chip-pending { background-color: rgba(255, 214, 102, 0.14); color: #FFD666; border: 1px solid rgba(255, 214, 102, 0.45); }
     .pf-chip-cancelled { background-color: rgba(255, 107, 96, 0.12); color: #FF8A80; border: 1px solid rgba(255, 107, 96, 0.4); }
     .pf-appt-amount.is-void { text-decoration: line-through; color: #9C9284; font-weight: 500; }
@@ -471,17 +308,12 @@ $profileData = [
     .pf-member-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
     .pf-member-discount { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: 1.8rem; font-weight: 700; color: var(--rose-accent); }
     .pf-member.is-gold .pf-member-discount { color: var(--gold-glow); }
-    .pf-progress { height: 6px; margin: 16px 0 20px; background-color: var(--card-cream); border: 1px solid var(--border-hairline); }
-    .pf-progress-fill { height: 100%; background-color: var(--rose-accent); }
-    .pf-member.is-gold .pf-progress-fill { background-color: var(--gold-glow); }
 
     /* Key / value lists */
     .pf-kv { display: grid; gap: 14px; margin: 0 0 22px; }
     .pf-kv-row { display: flex; justify-content: space-between; gap: 16px; font-size: 0.9rem; }
     .pf-kv dt { color: #9C9284; }
     .pf-kv dd { margin: 0; font-weight: 500; text-align: right; color: var(--text-ink); }
-    .pf-kv-row.is-stacked { flex-direction: column; gap: 6px; }
-    .pf-kv-row.is-stacked dd { text-align: left; color: #E4DCC8; font-weight: 400; }
 
     /* Account links */
     .pf-links { list-style: none; }
@@ -515,8 +347,6 @@ $profileData = [
     .pf-hint { font-size: 0.72rem; color: #9C9284; }
     .pf-error { display: none; font-size: 0.72rem; color: #FF6B60; }
     .pf-error.show { display: block; }
-    .pf-check { display: flex; align-items: flex-start; gap: 10px; font-size: 0.88rem; color: #E4DCC8; }
-    .pf-check input { width: 16px; height: 16px; margin-top: 3px; accent-color: var(--rose-accent); }
     .pf-alert { display: none; padding: 9px 13px; font-size: 0.78rem; color: #FF8A80; background: rgba(255, 107, 96, 0.12); border: 1px solid rgba(255, 107, 96, 0.4); border-radius: 8px; }
     .pf-alert.show { display: block; }
     .pf-modal-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px; margin-top: 8px; }
@@ -531,7 +361,6 @@ $profileData = [
     @media (max-width: 640px) {
       .pf-summary { flex-direction: column; align-items: flex-start; padding: 24px 20px; }
       .pf-summary .pf-btn { width: 100%; }
-      .pf-gate { padding: 36px 20px; }
       .pf-modal { padding: 24px 20px; }
     }
     @media (max-width: 560px) {
@@ -544,130 +373,6 @@ $profileData = [
     /* Smooth native page transition (no JS, no opacity hacks -> no flicker) */
     @view-transition {
       navigation: auto;
-    }
-  </style>
-  <style>
-    /* ===== DK Auth Modal — small on-page login/signup (no more full login.html redirect) ===== */
-    .dk-authmodal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(10, 8, 6, 0.72);
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
-      z-index: 9999;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-    .dk-authmodal-overlay.show { display: flex; }
-
-    .dk-authmodal-box {
-      position: relative;
-      width: 100%;
-      max-width: 380px;
-      max-height: 88vh;
-      overflow-y: auto;
-      background-color: var(--card-white, #1E1A14);
-      border: 1px solid var(--border-hairline, #7A6C55);
-      border-radius: 18px;
-      padding: 34px 24px 26px;
-      box-shadow: 0 30px 70px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04);
-      animation: dkAuthRise 0.25s cubic-bezier(0.2,0.8,0.2,1);
-    }
-    @keyframes dkAuthRise {
-      from { opacity: 0; transform: translateY(14px) scale(0.98); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
-    }
-
-    .dk-authmodal-close {
-      position: absolute;
-      top: 14px;
-      right: 14px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.1);
-      color: var(--text-ink, #F3EEE2);
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      padding: 0;
-    }
-    .dk-authmodal-close:hover { background: rgba(255,255,255,0.14); }
-
-    .dk-authmodal-panel { display: none; }
-    .dk-authmodal-panel.active { display: block; }
-
-    .dk-authmodal-title {
-      font-size: 1.35rem;
-      font-weight: 700;
-      margin-bottom: 6px;
-      color: var(--text-ink, #F3EEE2);
-    }
-    .dk-authmodal-sub { color: #9C9284; font-size: 0.82rem; margin-bottom: 20px; }
-    .dk-authmodal-sub a { color: var(--rose-accent, #C9A66B); font-weight: 600; text-decoration: none; }
-
-    .dk-authmodal-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .dk-authmodal-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
-    .dk-authmodal-label { font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #9C9284; }
-    .dk-authmodal-input {
-      padding: 11px 14px;
-      border: 1px solid rgba(255,255,255,0.09);
-      background-color: rgba(255,255,255,0.05);
-      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; /* ← FONT-FAMILY UPDATED */
-      font-size: 14px;
-      color: var(--text-ink, #F3EEE2);
-      width: 100%;
-      border-radius: 9px;
-      transition: border-color .15s ease, background .15s ease;
-    }
-    .dk-authmodal-input::placeholder { color: #6E675A; }
-    .dk-authmodal-input:focus {
-      outline: none;
-      border-color: var(--rose-accent, #C9A66B);
-      background-color: rgba(255,255,255,0.07);
-      box-shadow: 0 0 0 3px rgba(201,166,107,0.16);
-    }
-    .dk-authmodal-input.invalid { border-color: #FF6B60; }
-    .dk-authmodal-error { font-size: 0.68rem; color: #FF8A80; display: none; }
-    .dk-authmodal-error.show { display: block; }
-
-    .dk-authmodal-pwwrap { position: relative; }
-    .dk-authmodal-pwwrap .dk-authmodal-input { padding-right: 40px; }
-    .dk-authmodal-pwtoggle {
-      position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
-      background: none; border: none; color: #9C9284; cursor: pointer; display: flex; padding: 4px;
-    }
-    .dk-authmodal-pwtoggle:hover { color: var(--rose-accent, #C9A66B); }
-
-    .dk-authmodal-terms { display: flex; align-items: flex-start; gap: 8px; margin: 2px 0 14px; }
-    .dk-authmodal-terms input { width: 16px; height: 16px; margin-top: 1px; accent-color: var(--rose-accent, #C9A66B); flex-shrink: 0; cursor: pointer; }
-    .dk-authmodal-terms label { font-size: 0.74rem; color: #9C9284; }
-    .dk-authmodal-terms a { color: var(--rose-accent, #C9A66B); font-weight: 600; }
-
-    .dk-authmodal-submit {
-      display: flex; align-items: center; justify-content: center;
-      background: linear-gradient(135deg, var(--rose-accent, #C9A66B), var(--bronze-taupe, #A9884C));
-      color: #17130D; padding: 13px 24px; font-size: 0.86rem; font-weight: 700;
-      border: none; cursor: pointer; width: 100%; border-radius: 9px; margin-top: 4px;
-      transition: filter .2s ease, transform .15s ease;
-    }
-    .dk-authmodal-submit:hover { filter: brightness(1.08); }
-    .dk-authmodal-submit:active { transform: scale(0.99); }
-
-    .dk-authmodal-alert {
-      display: none; background: rgba(255,107,96,0.12); border: 1px solid rgba(255,107,96,0.4);
-      color: #FF8A80; font-size: 0.78rem; padding: 9px 13px; border-radius: 8px; margin-bottom: 14px;
-    }
-    .dk-authmodal-alert.show { display: block; }
-
-    body.dk-authmodal-lock { overflow: hidden; }
-
-    @media (min-width: 480px) {
-      .dk-authmodal-box { padding: 38px 34px 30px; }
     }
   </style>
   <style>
@@ -691,18 +396,6 @@ $profileData = [
       top: 8px;
     }
 
-    /* Accessibility: visually-hidden utility (screen-reader only) */
-    .sr-only {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      padding: 0;
-      margin: -1px;
-      overflow: hidden;
-      clip: rect(0, 0, 0, 0);
-      white-space: nowrap;
-      border: 0;
-    }
 
     /* Accessibility: consistent visible focus styles across interactive elements */
     a:focus-visible,
@@ -736,95 +429,10 @@ $profileData = [
       }
     </style>
   </noscript>
-  <link rel="stylesheet" href="assets/responsive.css">
+  <link rel="stylesheet" href="assets/responsive.css?v=<?= filemtime(__DIR__ . '/assets/responsive.css') ?>">
 </head>
 <body>
   <a href="#main-content" class="skip-link">Skip to content</a>
-  <!-- DK Auth Modal: small on-page login/signup card (replaces full-page login.html redirect) -->
-  <div class="dk-authmodal-overlay" id="dkAuthOverlay" onclick="if (event.target === this) dkCloseAuthModal();">
-    <div class="dk-authmodal-box" role="dialog" aria-modal="true" aria-labelledby="dkAuthHeading">
-      <button type="button" class="dk-authmodal-close" onclick="dkCloseAuthModal()" aria-label="Close">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
-
-      <div class="dk-authmodal-alert" id="dkAuthAlert" role="alert" aria-live="assertive" aria-atomic="true"></div>
-
-      <!-- LOGIN PANEL -->
-      <div class="dk-authmodal-panel active" id="dkAuthPanelLogin">
-        <h2 id="dkAuthHeading" class="font-serif dk-authmodal-title">Welcome back</h2>
-        <p class="dk-authmodal-sub">Don't have an account? <a href="#" onclick="dkAuthSwitchTab('signup'); return false;">Sign up</a></p>
-
-        <form id="dkAuthLoginForm" onsubmit="dkAuthHandleLogin(event)" novalidate>
-          <div class="dk-authmodal-group">
-            <label class="dk-authmodal-label" for="dkAuthLoginEmail">Email or Phone</label>
-            <input type="text" id="dkAuthLoginEmail" class="dk-authmodal-input" placeholder="you@email.com" aria-describedby="err-dkAuthLoginEmail">
-            <span class="dk-authmodal-error" id="err-dkAuthLoginEmail">Enter the email or phone you signed up with.</span>
-          </div>
-          <div class="dk-authmodal-group">
-            <label class="dk-authmodal-label" for="dkAuthLoginPassword">Password</label>
-            <div class="dk-authmodal-pwwrap">
-              <input type="password" id="dkAuthLoginPassword" class="dk-authmodal-input" placeholder="Enter your password" aria-describedby="err-dkAuthLoginPassword">
-              <button type="button" class="dk-authmodal-pwtoggle" onclick="dkAuthTogglePassword('dkAuthLoginPassword', this)" aria-label="Show password">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
-              </button>
-            </div>
-            <span class="dk-authmodal-error" id="err-dkAuthLoginPassword">Enter your password.</span>
-          </div>
-          <button type="submit" class="dk-authmodal-submit">Login</button>
-        </form>
-      </div>
-
-      <!-- SIGNUP PANEL -->
-      <div class="dk-authmodal-panel" id="dkAuthPanelSignup">
-        <h2 class="font-serif dk-authmodal-title">Create an account</h2>
-        <p class="dk-authmodal-sub">Already have an account? <a href="#" onclick="dkAuthSwitchTab('login'); return false;">Log in</a></p>
-
-        <form id="dkAuthSignupForm" onsubmit="dkAuthHandleSignup(event)" novalidate>
-          <div class="dk-authmodal-row">
-            <div class="dk-authmodal-group">
-              <label class="dk-authmodal-label" for="dkAuthSuFirstName">First name</label>
-              <input type="text" id="dkAuthSuFirstName" class="dk-authmodal-input" placeholder="Aarav" aria-describedby="err-dkAuthSuFirstName">
-              <span class="dk-authmodal-error" id="err-dkAuthSuFirstName">Enter your first name.</span>
-            </div>
-            <div class="dk-authmodal-group">
-              <label class="dk-authmodal-label" for="dkAuthSuLastName">Last name</label>
-              <input type="text" id="dkAuthSuLastName" class="dk-authmodal-input" placeholder="Mehta" aria-describedby="err-dkAuthSuLastName">
-              <span class="dk-authmodal-error" id="err-dkAuthSuLastName">Enter your last name.</span>
-            </div>
-          </div>
-          <div class="dk-authmodal-group">
-            <label class="dk-authmodal-label" for="dkAuthSuEmail">Email</label>
-            <input type="email" id="dkAuthSuEmail" class="dk-authmodal-input" placeholder="you@email.com" aria-describedby="err-dkAuthSuEmail">
-            <span class="dk-authmodal-error" id="err-dkAuthSuEmail">Enter a valid email address.</span>
-          </div>
-          <div class="dk-authmodal-group">
-            <label class="dk-authmodal-label" for="dkAuthSuPhone">Phone number</label>
-            <input type="tel" id="dkAuthSuPhone" class="dk-authmodal-input" placeholder="99246 20958" aria-describedby="err-dkAuthSuPhone">
-            <span class="dk-authmodal-error" id="err-dkAuthSuPhone">Enter a valid phone number.</span>
-          </div>
-          <div class="dk-authmodal-group">
-            <label class="dk-authmodal-label" for="dkAuthSuPassword">Password</label>
-            <div class="dk-authmodal-pwwrap">
-              <input type="password" id="dkAuthSuPassword" class="dk-authmodal-input" placeholder="At least 6 characters" aria-describedby="err-dkAuthSuPassword">
-              <button type="button" class="dk-authmodal-pwtoggle" onclick="dkAuthTogglePassword('dkAuthSuPassword', this)" aria-label="Show password">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
-              </button>
-            </div>
-            <span class="dk-authmodal-error" id="err-dkAuthSuPassword">Password must be at least 6 characters.</span>
-          </div>
-          <div class="dk-authmodal-terms">
-            <input type="checkbox" id="dkAuthSuTerms" aria-describedby="err-dkAuthSuTerms">
-            <label for="dkAuthSuTerms">I agree to the <a href="#">Terms &amp; Conditions</a></label>
-          </div>
-          <span class="dk-authmodal-error" id="err-dkAuthSuTerms" style="margin:-8px 0 12px;">Please accept the Terms &amp; Conditions.</span>
-
-          <button type="submit" class="dk-authmodal-submit">Create account</button>
-        </form>
-      </div>
-    </div>
-  </div>
-
-
   <!-- Header -->
   <header class="site-header" id="siteHeader">
     <div class="container header-inner">
@@ -993,74 +601,52 @@ $profileData = [
   </div>
 
   <!-- Footer -->
-  <footer class="site-footer">
-    <div class="footer-panel">
-      <div class="footer-card">
-        <div class="footer-top">
-          <div class="footer-brand">
-            <a href="index.php" class="brand-logo" aria-label="Deepkala Hair Salon">
-              <img src="assets/deepkala-emblem.png" width="34" height="34" alt="Deepkala Hair Salon" style="border-radius:6px;object-fit:cover;">
-              <div>
-                <div class="logo-text-title">DEEPKALA</div>
-                <div class="logo-text-sub">HAIR SALON</div>
-              </div>
-            </a>
-            <div class="footer-social">
-              <a href="https://wa.me/919924620958?text=Hi%20Deepkala%20Hair%20Salon" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
-              </a>
-              <a href="https://www.instagram.com/_yash_1249?stkn=bzVmcGRkdGc3enVs" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.6" cy="6.4" r="0.6" fill="currentColor"/></svg>
-              </a>
-              <!-- TODO: replace # with your Facebook page URL -->
-              <a href="#" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
-                <svg width="20" height="20" viewBox="5 2 14 21" fill="currentColor" aria-hidden="true"><path d="M13.5 22v-8.2h2.8l.5-3.4h-3.3V8.3c0-1 .4-1.7 1.8-1.7h1.6V3.5c-.3 0-1.3-.2-2.5-.2-2.6 0-4.3 1.6-4.3 4.4v2.7H7.2v3.4h2.9V22h3.4z"/></svg>
-              </a>
-            </div>
-          </div>
+  <footer class="dk-footer" id="site-footer">
+    <div class="container">
+      <div class="dk-footer-main">
 
-          <div class="footer-cols">
-            <nav class="footer-col" aria-label="Quick links">
-              <h3 class="footer-col-title">Quick links</h3>
-              <ul class="footer-list">
-                <li><a href="index.php">Home</a></li>
-                <li><a href="services.php">Services</a></li>
-                <li><a href="reviews.php">Client Reviews</a></li>
-                <li><a href="about.php">About</a></li>
-              </ul>
-            </nav>
-
-            <nav class="footer-col" aria-label="Book and visit">
-              <h3 class="footer-col-title">Book &amp; visit</h3>
-              <ul class="footer-list">
-                <li><a href="booking.php">Reserve Slot</a></li>
-                <li><a href="membership.php">Membership</a></li>
-                <li><a href="contact.php">Contact</a></li>
-              </ul>
-            </nav>
-
-            <div class="footer-col footer-col-info">
-              <h3 class="footer-col-title">Salon info</h3>
-              <ul class="footer-list">
-                <li>2 Jayvimal Society, Cadila Road, Ghodasar, Ahmedabad &ndash; 380050</li>
-                <li><a href="tel:+919924620958">+91 99246 20958</a></li>
-                <li>9:00 AM &ndash; 9:00 PM, Daily</li>
-              </ul>
-            </div>
+        <div class="dk-footer-brand">
+          <a href="index.php" class="brand-logo" aria-label="Deepkala Hair Salon"> <img src="assets/deepkala-emblem.png" width="34" height="34" alt="Deepkala Hair Salon" style="border-radius:6px;object-fit:cover;"> <div> <div class="logo-text-title">DEEPKALA</div> <div class="logo-text-sub">HAIR SALON</div> </div> </a>
+          <p class="dk-footer-desc">Master craftsmanship, precision haircuts, and dedicated personal grooming in Ghodasar, Ahmedabad.</p>
+          <div class="dk-footer-social">
+            <a href="https://wa.me/919924620958?text=Hi%20Deepkala%20Hair%20Salon" target="_blank" rel="noopener noreferrer" aria-label="Chat on WhatsApp" title="WhatsApp"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg></a>
+            <a href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" title="Instagram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></a>
+            <a href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer" aria-label="Facebook" title="Facebook"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
           </div>
         </div>
 
-        <div class="footer-bottom">
-          <div>&copy; 2026 Deepkala Hair Salon. All rights reserved.</div>
-          <div class="footer-legal">
-            <a href="#">Privacy Policy</a>
-            <a href="#">Terms of Service</a>
-            <a href="#">Cookies Settings</a>
-          </div>
+        <nav class="dk-footer-col" aria-label="Quick Links">
+          <h3 class="dk-footer-title">Quick Links</h3>
+          <ul class="dk-footer-list">
+            <li><a href="index.php">Home</a></li>
+            <li><a href="services.php">Services</a></li>
+            <li><a href="reviews.php">Client Reviews</a></li>
+            <li><a href="about.php">About</a></li>
+          </ul>
+        </nav>
+
+        <nav class="dk-footer-col" aria-label="Book and Visit">
+          <h3 class="dk-footer-title">Book &amp; Visit</h3>
+          <ul class="dk-footer-list">
+            <li><a href="booking.php">Reserve Slot</a></li>
+            <li><a href="membership.php">Membership</a></li>
+            <li><a href="contact.php">Contact</a></li>
+          </ul>
+        </nav>
+
+        <div class="dk-footer-col dk-footer-contact">
+          <h3 class="dk-footer-title">Salon Info</h3>
+          <ul class="dk-footer-info">
+            <li><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12 19.5s-6.5-5.4-6.5-10.5a6.5 6.5 0 0113 0c0 5.1-6.5 10.5-6.5 10.5zM12 6.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5z"/><ellipse cx="12" cy="21.6" rx="5" ry="1.1" opacity=".55"/></svg><div><small>Salon Address</small><a href="https://www.google.com/maps/search/?api=1&query=2+Jayvimal+Society+Cadila+Road+Ghodasar+Ahmedabad+380050" target="_blank" rel="noopener noreferrer" title="Open in Google Maps">2 Jayvimal Society, Cadila Road, Ghodasar, Ahmedabad – 380050</a></div></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg><div><small>Phone No</small><a href="tel:+919924620958">+91 99246 20958</a></div></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><div><small>Timings</small>9:00 AM – 9:00 PM, Daily</div></li>
+          </ul>
         </div>
+
       </div>
 
-      <div class="footer-watermark" aria-hidden="true">Deepkala</div>
+      <hr class="dk-footer-hr">
+      <p class="dk-footer-copy">© 2026 Deepkala Hair Salon. All rights reserved.</p>
     </div>
   </footer>
 

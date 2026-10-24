@@ -2,7 +2,7 @@
 -- Deepkala Hair Salon — COMPLETE database (fresh install, ONE file)
 -- phpMyAdmin -> Import tab -> choose this file -> Go
 -- Creates: users (with wallet), barbers, appointments, admins,
---          appointment_log, wallet_txn  + the default admin login.
+--          barber_leaves, wallet_txn, password_resets  + the default admin login.
 -- Safe to import on a new PC. (Uses IF NOT EXISTS, so it won't wipe data.)
 --
 -- ADMIN LOGIN (created automatically, no setup.php needed):
@@ -65,7 +65,6 @@ CREATE TABLE IF NOT EXISTS appointments (
     resched_by        VARCHAR(10) NULL,
     old_slot          VARCHAR(60) NULL,
     created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_appt_status (status),
     INDEX idx_appt_slot (appointment_date, appointment_time),
     INDEX idx_appt_user (user_id)
@@ -82,18 +81,7 @@ CREATE TABLE IF NOT EXISTS admins (
     name          VARCHAR(100) NOT NULL,
     email         VARCHAR(150) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
-    last_login    DATETIME NULL,
     created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS appointment_log (
-    id             INT AUTO_INCREMENT PRIMARY KEY,
-    appointment_id INT NOT NULL,
-    admin_id       INT NULL,
-    action         VARCHAR(30)  NOT NULL,
-    detail         VARCHAR(255) NULL,
-    created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_log_appt (appointment_id)
 );
 
 CREATE TABLE IF NOT EXISTS wallet_txn (
@@ -105,6 +93,13 @@ CREATE TABLE IF NOT EXISTS wallet_txn (
     reason         VARCHAR(255) NULL,
     created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_wallet_user (user_id)
+);
+
+CREATE TABLE IF NOT EXISTS password_resets (
+    email    VARCHAR(150) PRIMARY KEY,
+    otp_hash VARCHAR(255) NOT NULL,
+    expires  DATETIME NOT NULL,
+    tries    INT NOT NULL DEFAULT 0
 );
 
 -- Default admin (password Admin@123). Skipped if this email already exists.

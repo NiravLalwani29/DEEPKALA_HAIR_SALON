@@ -249,7 +249,6 @@ $initial = mb_strtoupper(mb_substr($adminName, 0, 1));
   .up { color:var(--good); background:rgba(95,181,122,.12); } .down { color:var(--bad); background:rgba(224,102,90,.12); }
 
   .grid2 { display:grid; grid-template-columns:minmax(0,1.9fr) minmax(0,1fr); gap:16px; margin-bottom:16px; }
-  .grid3 { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; margin-bottom:22px; }
 
   /* range toggle */
   .seg { display:inline-flex; background:var(--card2); border:1px solid var(--line); border-radius:10px; padding:3px; }
@@ -395,7 +394,6 @@ $initial = mb_strtoupper(mb_substr($adminName, 0, 1));
   @media (max-width:760px) {
     .ttl span, .gs { display:none; } .top-in { gap:12px; } .ttl { flex:1; } .ttl h1 { font-size:1.15rem; }
     .hero { padding:20px; } .hero h2 { font-size:1.35rem; }
-    .grid3 { grid-template-columns:1fr; } .grid3 .card:last-child { grid-column:auto; }
     .tools { flex-direction:column; align-items:stretch; } .search { width:100%; }
     .tbl { border:none; overflow:visible; }
     table { min-width:0; } thead { display:none; } table, tbody, tr, td { display:block; width:100%; }
