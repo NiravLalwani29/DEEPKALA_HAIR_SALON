@@ -1,6 +1,7 @@
 <?php
 // Starts the session on every page that includes this file
 session_start();
+date_default_timezone_set('Asia/Kolkata'); // salon time, so "today" and past slots match the shop
 
 // Basic MySQL connection settings — change if your XAMPP setup is different
 $host = "127.0.0.1";

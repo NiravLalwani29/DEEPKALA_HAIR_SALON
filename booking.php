@@ -53,7 +53,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['confirm_booking'])) {
         if (!isset($barbers[$pref])) $pref = 0;
         $free = free_barbers($conn, $date, $time);
 
-        if (!$free) {
+        if (slot_passed($date, $time)) {
+            $bookingMessage = "That time slot has already passed. Please choose a later slot.";
+        } elseif (!$free) {
             $bookingMessage = "All stylists are busy at that time. Please choose another slot or date.";
         } elseif ($pref && !isset($free[$pref])) {
             $bookingMessage = $barbers[$pref] . " is unavailable then. Try another slot, date or stylist: " . implode(', ', $free) . ".";
@@ -1350,7 +1352,7 @@ if ($isLoggedIn) {
               <label class="form-label" for="bStylist">Preferred Stylist (optional)</label>
               <select id="bStylist" name="stylist" class="form-select">
                 <option value="0">Any available stylist</option>
-                <?php foreach ($barbers as $bid => $bn) { echo '<option value="' . (int) $bid . '">' . htmlspecialchars($bn) . '</option>'; } ?>
+                <?php $want = array_search($_GET['stylist'] ?? '', $barbers); foreach ($barbers as $bid => $bn) { echo '<option value="' . (int) $bid . '"' . ($bid === $want ? ' selected' : '') . '>' . htmlspecialchars($bn) . '</option>'; } ?>
               </select>
               <small id="stylistMsg" class="stylist-msg" role="status"></small>
             </div>
@@ -1618,13 +1620,23 @@ if ($isLoggedIn) {
         }, { passive: true });
       }
 
-      // Default Date to Today
-      const dateInput = document.getElementById('bDate');
-      if (dateInput) {
-        const today = new Date().toISOString().split('T')[0];
-        dateInput.value = today;
-        dateInput.min = today;
-      }
+      // Date defaults to today; time slots that already passed are removed (after the last slot, tomorrow is selected)
+      (function () {
+        const d = document.getElementById('bDate'), t = document.getElementById('bTime'),
+              all = [...t.options].map(o => o.value), ymd = x => x.toLocaleDateString('en-CA');
+        function sync() {
+          const n = new Date(), today = ymd(n), mins = n.getHours() * 60 + n.getMinutes(),
+                upcoming = all.filter(v => (parseInt(v) % 12 + (v.endsWith('PM') ? 12 : 0)) * 60 > mins);
+          d.min = upcoming.length ? today : ymd(new Date(n.getTime() + 864e5));
+          if (d.value < d.min) d.value = d.min;
+          const keep = d.value === today ? upcoming : all, cur = t.value;
+          t.innerHTML = keep.map(v => '<option>' + v + '</option>').join('');
+          if (keep.includes(cur)) t.value = cur;
+          if (t.value !== cur) t.dispatchEvent(new Event('change'));
+        }
+        d.addEventListener('change', sync);
+        sync();
+      })();
 
       // Parse URL Parameter for pre-selected service
       const urlParams = new URLSearchParams(window.location.search);

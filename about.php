@@ -1080,7 +1080,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
                   <div class="ab-team-name">Deepesh Parmar</div>
                   <div class="ab-team-role">Founder &amp; Master Stylist</div>
                   <p class="ab-team-back-bio">Over 12 years of experience in classic barbering, advanced scissor techniques and client consultation.</p>
-                  <a href="booking.php" class="ab-team-back-cta" onclick="event.stopPropagation()">Book Now</a>
+                  <a href="booking.php?stylist=Deepesh+Parmar" class="ab-team-back-cta" onclick="event.stopPropagation()">Book Now</a>
                 </div>
               </div>
             </div>
@@ -1102,7 +1102,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
                   <div class="ab-team-name">Kalpesh Patel</div>
                   <div class="ab-team-role">Senior Fade &amp; Colour Specialist</div>
                   <p class="ab-team-back-bio">Specialises in skin fades, undercuts, textured crop cuts and custom hair colouring.</p>
-                  <a href="booking.php" class="ab-team-back-cta" onclick="event.stopPropagation()">Book Now</a>
+                  <a href="booking.php?stylist=Kalpesh+Patel" class="ab-team-back-cta" onclick="event.stopPropagation()">Book Now</a>
                 </div>
               </div>
             </div>
@@ -1124,7 +1124,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
                   <div class="ab-team-name">Sanjay Kumar</div>
                   <div class="ab-team-role">Beard Specialist &amp; Spa Therapist</div>
                   <p class="ab-team-back-bio">Experienced in razor lining, hot towel shaves, scalp massage and nourishing hair spa treatments.</p>
-                  <a href="booking.php" class="ab-team-back-cta" onclick="event.stopPropagation()">Book Now</a>
+                  <a href="booking.php?stylist=Sanjay+Kumar" class="ab-team-back-cta" onclick="event.stopPropagation()">Book Now</a>
                 </div>
               </div>
             </div>
@@ -1147,7 +1147,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
                   <div class="ab-team-name">Nisha Solanki</div>
                   <div class="ab-team-role">Bridal &amp; Wedding Makeup Artist</div>
                   <p class="ab-team-back-bio">Specialises in bridal, engagement and reception makeup, tailored to the occasion, outfit and skin type.</p>
-                  <a href="booking.php" class="ab-team-back-cta" onclick="event.stopPropagation()">Book Now</a>
+                  <a href="booking.php?stylist=Nisha+Solanki" class="ab-team-back-cta" onclick="event.stopPropagation()">Book Now</a>
                 </div>
               </div>
             </div>
@@ -1170,7 +1170,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
                   <div class="ab-team-name">Rahul Desai</div>
                   <div class="ab-team-role">Senior Barber</div>
                   <p class="ab-team-back-bio">Skin fades, classic tapers and sharp hairlines, built on years behind the chair.</p>
-                  <a href="booking.php" class="ab-team-back-cta" onclick="event.stopPropagation()">Book Now</a>
+                  <a href="booking.php?stylist=Rahul+Desai" class="ab-team-back-cta" onclick="event.stopPropagation()">Book Now</a>
                 </div>
               </div>
             </div>
@@ -1192,7 +1192,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
                   <div class="ab-team-name">Amit Joshi</div>
                   <div class="ab-team-role">Beard &amp; Grooming Specialist</div>
                   <p class="ab-team-back-bio">Beard shaping, hot-towel shaves and detailed grooming for a clean, polished finish.</p>
-                  <a href="booking.php" class="ab-team-back-cta" onclick="event.stopPropagation()">Book Now</a>
+                  <a href="booking.php?stylist=Amit+Joshi" class="ab-team-back-cta" onclick="event.stopPropagation()">Book Now</a>
                 </div>
               </div>
             </div>
@@ -1214,7 +1214,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
                   <div class="ab-team-name">Priya Shah</div>
                   <div class="ab-team-role">Hair Colour Specialist</div>
                   <p class="ab-team-back-bio">Global colour, highlights and toning, planned around your hair type and skin tone.</p>
-                  <a href="booking.php" class="ab-team-back-cta" onclick="event.stopPropagation()">Book Now</a>
+                  <a href="booking.php?stylist=Priya+Shah" class="ab-team-back-cta" onclick="event.stopPropagation()">Book Now</a>
                 </div>
               </div>
             </div>
@@ -1236,7 +1236,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
                   <div class="ab-team-name">Vikram Rathod</div>
                   <div class="ab-team-role">Stylist</div>
                   <p class="ab-team-back-bio">Modern cuts and textured styling, with a calm and precise approach to every client.</p>
-                  <a href="booking.php" class="ab-team-back-cta" onclick="event.stopPropagation()">Book Now</a>
+                  <a href="booking.php?stylist=Vikram+Rathod" class="ab-team-back-cta" onclick="event.stopPropagation()">Book Now</a>
                 </div>
               </div>
             </div>

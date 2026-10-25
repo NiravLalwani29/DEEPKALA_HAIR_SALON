@@ -1,18 +1,30 @@
 <?php
 require 'backend/config.php';
+require 'backend/wallet.php';
 
 $isLoggedIn = isset($_SESSION['user_id']);
 
 // Handle "Pay & Activate Membership" — real form submit, no fetch/AJAX
 $planJustActivated = false;
+$refund = 0;
 $membershipMessage = "";
 
 if ($isLoggedIn && $_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['choose_plan'])) {
     $plan = mysqli_real_escape_string($conn, $_POST['choose_plan']); // 'silver' or 'gold'
 
     if ($plan == 'silver' || $plan == 'gold') {
-        $sql = "UPDATE users SET membership = '$plan' WHERE id = '{$_SESSION['user_id']}'";
-        mysqli_query($conn, $sql);
+        $uid = (int) $_SESSION['user_id'];
+        mysqli_begin_transaction($conn);
+        // Gold -> Silver: the conditional UPDATE means the refund is paid once, even on a double submit
+        if ($plan == 'silver') {
+            mysqli_query($conn, "UPDATE users SET membership = 'silver' WHERE id = $uid AND membership = 'gold'");
+            if (mysqli_affected_rows($conn) > 0) {
+                $refund = 999 - 499;
+                wallet_credit($conn, $uid, $refund, null, 'Refund: switched from Gold to Silver membership');
+            }
+        }
+        mysqli_query($conn, "UPDATE users SET membership = '$plan' WHERE id = $uid");
+        mysqli_commit($conn);
 
         // Keep the session in sync with the database
         $_SESSION['membership'] = $plan;
@@ -675,7 +687,7 @@ $currentPlan = $_SESSION['membership'] ?? 'none';
           label.textContent = 'Amount Payable';
           amountEl.textContent = '₹0';
           note.style.display = 'block';
-          note.textContent = `You're switching down from ${userCurrentPlan} to ${plan.label}. The ₹${Math.abs(diff)} difference will be refunded to your original payment method within 5–7 business days. No extra payment needed — just confirm below.`;
+          note.textContent = `You're switching down from ${userCurrentPlan} to ${plan.label}. The ₹${Math.abs(diff)} difference will be refunded to your Deepkala wallet instantly. No extra payment needed — just confirm below.`;
           toggle.style.display = 'none';
           document.getElementById('cardFields').classList.remove('active');
           document.getElementById('upiFields').classList.remove('active');
@@ -787,7 +799,7 @@ $currentPlan = $_SESSION['membership'] ?? 'none';
     <?php if ($planJustActivated) { ?>
     window.addEventListener('DOMContentLoaded', function () {
       document.getElementById('successTitle').textContent = <?php echo json_encode($currentPlan === 'gold' ? 'Welcome to Gold!' : 'Welcome to Silver!'); ?>;
-      document.getElementById('successSub').textContent = 'Your membership is now active.';
+      document.getElementById('successSub').textContent = <?php echo json_encode($refund ? "₹$refund has been refunded to your Deepkala wallet." : 'Your membership is now active.'); ?>;
       document.getElementById('successSummary').innerHTML =
         '<strong><?php echo $currentPlan === 'gold' ? 'Gold Membership' : 'Silver Membership'; ?></strong> activated<br><?php echo $currentPlan === 'gold' ? 20 : 10; ?>% off every service, automatically';
 

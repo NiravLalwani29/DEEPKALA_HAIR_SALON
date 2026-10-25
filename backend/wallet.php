@@ -2,6 +2,8 @@
 // Shared helpers: time slots, wallet, cancel + reschedule (used by admin and customer)
 const DK_SLOTS = ['09:00 AM','10:00 AM','11:00 AM','12:00 PM','01:00 PM','02:00 PM','03:00 PM','04:00 PM','05:00 PM','06:00 PM','07:00 PM','08:00 PM'];
 
+function slot_passed($date, $time) { return strtotime("$date $time") <= time(); }
+
 function wallet_log($conn, $uid, $apptId, $type, $amt, $why) {
     $st = mysqli_prepare($conn, "INSERT INTO wallet_txn (user_id, appointment_id, type, amount, reason) VALUES (?,?,?,?,?)");
     mysqli_stmt_bind_param($st, 'iisis', $uid, $apptId, $type, $amt, $why);
@@ -65,6 +67,7 @@ function reschedule_appt($conn, $id, $by, $date, $time, $reason) {
     if (!$d || $d->format('Y-m-d') !== $date) return 'Choose a valid date.';
     if ($date < date('Y-m-d')) return 'The new date cannot be in the past.';
     if (!in_array($time, DK_SLOTS, true)) return 'Choose a valid time slot.';
+    if (slot_passed($date, $time)) return 'That time has already passed. Pick a later slot.';
 
     mysqli_begin_transaction($conn);
     try {
