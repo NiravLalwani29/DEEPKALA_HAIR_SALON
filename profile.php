@@ -9,7 +9,6 @@ if (!$isLoggedIn) {
 }
 $uid = (int) $_SESSION['user_id'];
 
-// ---- Save edited name / phone (called by the Edit Profile form via fetch) ----
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && ($_POST['action'] ?? '') == 'update_profile') {
     header('Content-Type: application/json');
     $name  = trim(preg_replace('/\s+/', ' ', $_POST['name'] ?? ''));
@@ -32,7 +31,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && ($_POST['action'] ?? '') == 'update_
     exit;
 }
 
-// ---- Load fresh user + appointments from the database ----
 $u = mysqli_fetch_assoc(mysqli_query($conn, "SELECT name, phone, email, membership FROM users WHERE id = '$uid'"));
 if (!$u) {
     session_unset();
@@ -57,11 +55,10 @@ while ($r = mysqli_fetch_assoc($res)) {
         'barber'  => $r['barber_name'] ?? '—',
         'method'  => $r['payment_method'],
         'amount'  => (int) $r['amount'],
-        // --- set by the admin dashboard (approve / cancel / reschedule) ---
         'id'      => (int) $r['id'],
-        'status'  => $r['status'] ?? 'pending',            // pending | approved | cancelled
-        'note'    => $r['admin_note'] ?? '',                // cancellation reason, if any
-        'resched' => (int) ($r['rescheduled_count'] ?? 0),  // how many times the salon moved it
+        'status'  => $r['status'] ?? 'pending',
+        'note'    => $r['admin_note'] ?? '',
+        'resched' => (int) ($r['rescheduled_count'] ?? 0),
         'cancelled_by' => $r['cancelled_by'] ?? '',
         'refunded'     => (int) ($r['refunded'] ?? 0),
         'resched_note' => $r['resched_note'] ?? '',
@@ -69,7 +66,6 @@ while ($r = mysqli_fetch_assoc($res)) {
         'old_slot'     => $r['old_slot'] ?? '',
     ];
 }
-// ---- Wallet balance + history ----
 $walletBal = (int) (mysqli_fetch_assoc(mysqli_query($conn, "SELECT wallet FROM users WHERE id = $uid"))['wallet'] ?? 0);
 $txns = [];
 $tr = mysqli_query($conn, "SELECT w.*, a.service FROM wallet_txn w LEFT JOIN appointments a ON a.id = w.appointment_id
@@ -98,14 +94,12 @@ $profileData = [
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Profile — Deepkala Hair Salon, Ahmedabad</title>
 
-  <!-- Favicon SVG Monogram -->
   <link rel="icon" type="image/png" href="assets/deepkala-emblem.png">
 
-  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <!-- FONT-FAMILY UPDATED: Fraunces + Karla → Playfair Display + Inter -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/theme.css?v=<?= filemtime(__DIR__ . '/assets/theme.css') ?>">
   <style>
     * {
       box-sizing: border-box;
@@ -113,23 +107,9 @@ $profileData = [
       padding: 0;
     }
 
-    :root {
-      --bg-cream: #15130E;
-      --text-ink: #F3EEE2;
-      --rose-accent: #C9A66B;
-      --rose-accent-hover: #B8935A;
-      --rose-deep: #0A0806;
-      --bronze-taupe: #A9884C;
-      --card-white: #1E1A14;
-      --card-cream: #221E17;
-      --border-hairline: #7A6C55;
-      --whatsapp-green: #25D366;
-      --gold-glow: #FFD666;
-    }
-
     html {
       scroll-behavior: smooth;
-      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; /* ← FONT-FAMILY UPDATED */
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
       background-color: var(--bg-cream);
       color: var(--text-ink);
       line-height: 1.6;
@@ -138,31 +118,46 @@ $profileData = [
     }
 
     body { min-height: 100vh; display: flex; flex-direction: column; width: 100%; overflow-x: hidden; }
+
     img, svg { max-width: 100%; height: auto; }
+
     a { color: inherit; text-decoration: none; }
 
     .container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 24px; }
-    @media (max-width: 768px) { .container { padding: 0 16px; } }
+@media (max-width: 768px) {
+ .container { padding: 0 16px; }
+}
 
-    .font-serif { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; /* ← FONT-FAMILY UPDATED */ }
-    h1.font-serif { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; /* ← FONT-FAMILY UPDATED */ font-variation-settings: "opsz" 144, "SOFT" 0, "WONK" 0; }
+    .font-serif { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; }
 
-    /* Header (shared) */
+    h1.font-serif { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-variation-settings: "opsz" 144, "SOFT" 0, "WONK" 0; }
+
     .site-header { position: sticky; top: 0; z-index: 100; background-color: rgba(21, 19, 14, 0.95); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border-hairline); transition: padding 0.3s ease, box-shadow 0.3s ease; }
+
     .header-inner { display: flex; align-items: center; justify-content: space-between; height: 76px; }
+
     .brand-logo { display: flex; align-items: center; gap: 12px; }
-    .logo-text-title { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; /* ← FONT-FAMILY UPDATED */ font-variation-settings: "opsz" 144, "SOFT" 0, "WONK" 0; font-size: 1.25rem; font-weight: 700; letter-spacing: 0.06em; color: var(--text-ink); line-height: 1.1; }
-    .logo-text-sub { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; /* ← FONT-FAMILY UPDATED */ font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: var(--bronze-taupe); }
+
+    .logo-text-title { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-variation-settings: "opsz" 144, "SOFT" 0, "WONK" 0; font-size: 1.25rem; font-weight: 700; letter-spacing: 0.06em; color: var(--text-ink); line-height: 1.1; }
+
+    .logo-text-sub { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: var(--bronze-taupe); }
+
     .nav-links { display: flex; align-items: center; gap: 28px; list-style: none; }
+
     .nav-link { font-size: 0.825rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-ink); padding: 6px 0; position: relative; transition: color 0.2s ease; }
+
     .nav-link:hover, .nav-link.active { color: var(--rose-accent); }
+
     .nav-link.active::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 2px; background-color: var(--rose-accent); }
-    .header-book-btn { display: inline-flex; align-items: center; justify-content: center; padding: 9px 20px; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; background-color: var(--rose-accent); color: #15130E; border: 1px solid var(--rose-accent); border-radius: 4px; transition: all 0.2s ease; white-space: nowrap; }
-    .header-book-btn:hover { background-color: var(--rose-accent-hover); border-color: var(--rose-accent-hover); color: #15130E; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(10, 8, 6, 0.35); }
+
+    .header-book-btn { display: inline-flex; align-items: center; justify-content: center; padding: 9px 20px; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; background-color: var(--rose-accent); color: var(--on-primary); border: 1px solid var(--rose-accent); border-radius: 4px; transition: all 0.2s ease; white-space: nowrap; }
+
+    .header-book-btn:hover { background-color: var(--rose-accent-hover); border-color: var(--rose-accent-hover); color: var(--on-primary); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(10, 8, 6, 0.35); }
+
     .mobile-toggle { display: none; background: none; border: none; cursor: pointer; padding: 8px; color: var(--text-ink); }
 
-    /* Page Hero */
     .page-hero { position: relative; padding: 60px 0 40px 0; text-align: center; border-bottom: 1px solid var(--border-hairline); background-color: var(--bg-cream); overflow: hidden; isolation: isolate; }
+
     .page-hero::before {
       content: "";
       position: absolute;
@@ -171,220 +166,291 @@ $profileData = [
       background-image:
         radial-gradient(circle at 25% 20%, rgba(201,166,107,0.12), transparent 55%),
         radial-gradient(circle at 80% 85%, rgba(201,166,107,0.07), transparent 50%),
-        repeating-linear-gradient(135deg, rgba(243,238,226,0.04) 0px, rgba(243,238,226,0.04) 1px, transparent 1px, transparent 9px),
+        repeating-linear-gradient(135deg, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px, transparent 1px, transparent 9px),
         repeating-linear-gradient(45deg, rgba(0,0,0,0.22) 0px, rgba(0,0,0,0.22) 1px, transparent 1px, transparent 9px),
         url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
       background-size: auto, auto, auto, auto, 180px 180px;
       background-repeat: no-repeat, no-repeat, repeat, repeat, repeat;
       z-index: -2;
     }
+
     .page-hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(160deg, rgba(10,8,6,0.82) 0%, rgba(201,166,107,0.38) 55%, rgba(10,8,6,0.88) 100%); z-index: -1; }
+
     .page-hero > .container { position: relative; z-index: 1; }
+
     .page-hero h1 { font-size: clamp(2.2rem, 4vw, 3.2rem); font-weight: 700; color: var(--text-ink); margin-bottom: 12px; }
-    .page-hero p { font-size: 1rem; color: #B3AA98; max-width: 620px; margin: 0 auto; }
 
+    .page-hero p { font-size: 1rem; color: var(--text-2); max-width: 620px; margin: 0 auto; }
 
-    .eyebrow-tag { display: inline-block; background-color: var(--text-ink); color: var(--bg-cream); padding: 6px 14px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; }
+    .eyebrow-tag { display: inline-block; background-color: var(--brand); color: var(--on-brand); padding: 6px 14px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; }
+
     .category-header { display: flex; align-items: center; gap: 16px; margin-top: 48px; margin-bottom: 16px; }
+
     .category-header .hairline { flex: 1; height: 1px; background-color: var(--border-hairline); }
 
-    /* keep footer at page bottom on short pages */
     main { flex: 1 0 auto; }
-    .whatsapp-float { position: fixed; bottom: max(20px, env(safe-area-inset-bottom, 20px)); right: max(20px, env(safe-area-inset-right, 20px)); width: 52px; height: 52px; background-color: var(--whatsapp-green); color: #15130E; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(37,211,102,0.35); z-index: 999; transition: transform 0.2s ease; }
+
+    .whatsapp-float { position: fixed; bottom: max(20px, env(safe-area-inset-bottom, 20px)); right: max(20px, env(safe-area-inset-right, 20px)); width: 52px; height: 52px; background-color: var(--whatsapp-green); color: var(--on-whatsapp); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(37,211,102,0.35); z-index: 999; transition: transform 0.2s ease; }
+
     .whatsapp-float:hover { transform: scale(1.08) translateY(-2px); }
 
     .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.6s cubic-bezier(0.16,1,0.3,1), transform 0.6s cubic-bezier(0.16,1,0.3,1); }
+
     .reveal.active { opacity: 1; transform: translateY(0); }
 
     .mobile-menu-cta { display: none; }
-
-    @media (max-width: 860px) {
+@media (max-width: 860px) {
       .nav-links { display: none; position: absolute; top: 100%; left: 0; right: 0; background-color: var(--bg-cream); border-bottom: 2px solid var(--rose-accent); flex-direction: column; padding: 16px 20px 24px 20px; gap: 8px; box-shadow: 0 12px 28px rgba(0,0,0,0.45); z-index: 999; max-height: calc(100vh - 80px); overflow-y: auto; }
+
       .nav-links.show { display: flex; }
+
       .nav-link { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; font-size: 0.9rem; width: 100%; border-bottom: 1px solid var(--border-hairline); border-radius: 4px; }
+
       .nav-link:hover, .nav-link.active { background-color: var(--card-cream); }
+
       .mobile-toggle { display: flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; border: 1px solid var(--border-hairline); border-radius: 4px; }
+
       .mobile-menu-cta { display: block; margin-top: 8px; }
-    }
+}
 
     .dk-member-badge { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; padding: 3px 9px; border-radius: 4px; white-space: nowrap; }
+
     .dk-badge-silver { background-color: rgba(201,166,107,0.15); color: #C9A66B; border: 1px solid rgba(201,166,107,0.4); }
-    .dk-badge-gold { background-color: rgba(255,214,102,0.15); color: #FFD666; border: 1px solid rgba(255,214,102,0.45); }
+
+    .dk-badge-gold { background-color: rgba(255,214,102,0.15); color: var(--highlight); border: 1px solid rgba(255,214,102,0.45); }
+
     .dk-nav-profile { display: none; }
-    @media (max-width: 860px) { .dk-nav-profile { display: block; } }
+@media (max-width: 860px) {
+ .dk-nav-profile { display: block; }
+}
+
     .nav-member-badge { margin-left: 8px; font-size: 0.55rem !important; padding: 2px 7px !important; vertical-align: middle; }
-    @media (max-width: 860px) { .dk-auth-slot { display: none; } }
-  </style>
+</style>
   <style>
-    /* ===== Profile page (pf-) ===== */
     [hidden] { display: none !important; }
 
-    /* Shared price treatment (same as other pages) */
-    .dk-price-old { text-decoration: line-through; color: #8A8171; font-size: 0.78em; font-weight: 500; margin-right: 2px; }
+    .dk-price-old { text-decoration: line-through; color: var(--text-3); font-size: 0.78em; font-weight: 500; margin-right: 2px; }
+
     .dk-price-new { color: var(--rose-accent); font-weight: 700; }
 
     .pf-wrap { padding-bottom: 72px; }
 
-    /* Buttons */
     .pf-btn {
       display: inline-flex; align-items: center; justify-content: center; gap: 8px;
       padding: 10px 20px; min-height: 42px;
       font-family: inherit; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
-      background-color: var(--rose-accent); color: #15130E;
+      background-color: var(--rose-accent); color: var(--on-primary);
       border: 1px solid var(--rose-accent); border-radius: 4px;
       cursor: pointer; white-space: nowrap; transition: all 0.2s ease;
     }
+
     .pf-btn:hover { background-color: var(--rose-accent-hover); border-color: var(--rose-accent-hover); }
+
     .pf-btn-outline { background-color: transparent; color: var(--text-ink); border-color: var(--border-hairline); }
+
     .pf-btn-outline:hover { background-color: transparent; border-color: var(--rose-accent); color: var(--rose-accent); }
+
     .pf-btn-block { width: 100%; }
 
-    /* Notice banner (mirrors .member-status-bar) */
-    .pf-notice { margin-top: 32px; padding: 14px 20px; background-color: var(--card-cream); border: 1px solid var(--rose-accent); color: #E4DCC8; font-size: 0.9rem; }
+    .pf-notice { margin-top: 32px; padding: 14px 20px; background-color: var(--card-cream); border: 1px solid var(--rose-accent); color: #FFFFFF; font-size: 0.9rem; }
 
-
-    /* Summary card */
     .pf-summary { display: flex; align-items: center; gap: 28px; margin-top: 40px; padding: 32px; background-color: var(--card-white); border: 1px solid var(--border-hairline); }
+
     .pf-avatar {
       position: relative; flex: 0 0 auto; width: 88px; height: 88px; border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
       font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: 1.9rem; font-weight: 700;
       color: var(--rose-accent); background-color: var(--card-cream); border: 1px solid var(--bronze-taupe);
     }
+
     .pf-avatar::after { content: ''; position: absolute; inset: 5px; border: 1px dashed var(--bronze-taupe); border-radius: 50%; opacity: 0.6; }
+
     .pf-identity { flex: 1 1 auto; min-width: 0; }
+
     .pf-name-row { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 10px; }
+
     .pf-name { font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 700; line-height: 1.2; }
-    .pf-contact { list-style: none; display: flex; flex-wrap: wrap; gap: 8px 24px; color: #B3AA98; font-size: 0.9rem; }
+
+    .pf-contact { list-style: none; display: flex; flex-wrap: wrap; gap: 8px 24px; color: var(--text-2); font-size: 0.9rem; }
+
     .pf-contact li { display: flex; align-items: center; gap: 8px; min-width: 0; }
+
     .pf-contact svg { flex-shrink: 0; color: var(--bronze-taupe); }
 
-    /* Stats */
     .pf-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
+
     .pf-stat { padding: 20px; background-color: var(--card-white); border: 1px solid var(--border-hairline); }
+
     .pf-stat-value { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: 1.6rem; font-weight: 700; line-height: 1.25; color: var(--text-ink); }
+
     .pf-stat-value.is-text { font-size: 1.15rem; padding-top: 5px; }
+
     .pf-stat-label { margin-top: 6px; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--bronze-taupe); }
 
-    /* Two-column layout */
     .pf-grid { display: grid; grid-template-columns: minmax(0, 1fr); column-gap: 40px; }
 
-    /* Cards */
     .pf-card { padding: 24px; background-color: var(--card-white); border: 1px solid var(--border-hairline); }
-    .pf-card-title { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: 1.2rem; font-weight: 700; margin-bottom: 8px; }
-    .pf-card-text { font-size: 0.9rem; color: #B3AA98; margin-bottom: 20px; }
-    .pf-empty { text-align: center; padding: 32px 24px; }
-    .pf-empty p { color: #B3AA98; font-size: 0.92rem; margin-bottom: 18px; }
 
-    /* Appointments */
+    .pf-card-title { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: 1.2rem; font-weight: 700; margin-bottom: 8px; }
+
+    .pf-card-text { font-size: 0.9rem; color: var(--text-2); margin-bottom: 20px; }
+
+    .pf-empty { text-align: center; padding: 32px 24px; }
+
+    .pf-empty p { color: var(--text-2); font-size: 0.92rem; margin-bottom: 18px; }
+
     .pf-list { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+
     .pf-appt {
       display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; align-items: center; gap: 18px;
       padding: 18px 20px; background-color: var(--card-white); border: 1px solid var(--border-hairline);
     }
+
     .pf-appt.is-upcoming { border-color: var(--rose-accent); }
+
     .pf-appt-date { text-align: center; padding: 8px 0; background-color: var(--card-cream); border: 1px solid var(--border-hairline); }
+
     .pf-appt-day { display: block; font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: 1.5rem; font-weight: 700; line-height: 1.1; color: var(--rose-accent); }
-    .pf-appt-mon { display: block; margin-top: 2px; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #B3AA98; }
+
+    .pf-appt-mon { display: block; margin-top: 2px; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-2); }
+
     .pf-appt-service { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: 1.1rem; font-weight: 700; line-height: 1.3; margin-bottom: 2px; }
-    .pf-appt-meta { font-size: 0.85rem; color: #B3AA98; }
-    .pf-appt-meta.is-faint { font-size: 0.75rem; color: #8A8171; margin-top: 2px; }
+
+    .pf-appt-meta { font-size: 0.85rem; color: var(--text-2); }
+
+    .pf-appt-meta.is-faint { font-size: 0.75rem; color: var(--text-3); margin-top: 2px; }
+
     .pf-appt-trail { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; text-align: right; }
+
     .pf-appt-amount { font-size: 1rem; font-weight: 700; color: var(--text-ink); }
+
     .pf-appt-actions { grid-column: 1 / -1; padding-top: 14px; border-top: 1px solid rgba(122, 108, 85, 0.45); }
+
     .pf-more { display: flex; margin: 16px auto 0; }
+
     .pf-capped.is-open { max-height: 480px; overflow-y: auto; padding-right: 6px; scrollbar-width: thin; scrollbar-color: #A9884C transparent; }
 
-    /* Status chips (same shape as .dk-member-badge) */
     .pf-chip { display: inline-block; padding: 3px 9px; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; border-radius: 4px; white-space: nowrap; }
-    .pf-chip-confirmed { background-color: rgba(201, 166, 107, 0.15); color: #C9A66B; border: 1px solid rgba(201, 166, 107, 0.4); }
-    .pf-chip-done { background-color: rgba(243, 238, 226, 0.06); color: #9C9284; border: 1px solid rgba(243, 238, 226, 0.18); }
-    .pf-chip-pending { background-color: rgba(255, 214, 102, 0.14); color: #FFD666; border: 1px solid rgba(255, 214, 102, 0.45); }
-    .pf-chip-cancelled { background-color: rgba(255, 107, 96, 0.12); color: #FF8A80; border: 1px solid rgba(255, 107, 96, 0.4); }
-    .pf-appt-amount.is-void { text-decoration: line-through; color: #9C9284; font-weight: 500; }
 
-    /* Membership card */
+    .pf-chip-confirmed { background-color: rgba(201, 166, 107, 0.15); color: #C9A66B; border: 1px solid rgba(201, 166, 107, 0.4); }
+
+    .pf-chip-done { background-color: rgba(255, 255, 255, 0.06); color: var(--text-3); border: 1px solid rgba(255, 255, 255, 0.18); }
+
+    .pf-chip-pending { background-color: rgba(229, 160, 60, 0.14); color: var(--warning); border: 1px solid rgba(229, 160, 60, 0.45); }
+
+    .pf-chip-cancelled { background-color: rgba(255, 107, 96, 0.12); color: #FF8A80; border: 1px solid rgba(255, 107, 96, 0.4); }
+
+    .pf-appt-amount.is-void { text-decoration: line-through; color: var(--text-3); font-weight: 500; }
+
     .pf-member.is-gold { border-color: var(--gold-glow); box-shadow: 0 10px 30px rgba(255, 214, 102, 0.08); }
+
     .pf-member-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
+
     .pf-member-discount { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: 1.8rem; font-weight: 700; color: var(--rose-accent); }
+
     .pf-member.is-gold .pf-member-discount { color: var(--gold-glow); }
 
-    /* Key / value lists */
     .pf-kv { display: grid; gap: 14px; margin: 0 0 22px; }
+
     .pf-kv-row { display: flex; justify-content: space-between; gap: 16px; font-size: 0.9rem; }
-    .pf-kv dt { color: #9C9284; }
+
+    .pf-kv dt { color: var(--text-3); }
+
     .pf-kv dd { margin: 0; font-weight: 500; text-align: right; color: var(--text-ink); }
 
-    /* Account links */
     .pf-links { list-style: none; }
+
     .pf-links li + li { border-top: 1px solid rgba(122, 108, 85, 0.45); }
+
     .pf-links a, .pf-links button {
       display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 14px 0;
       background: none; border: 0; color: var(--text-ink); font: inherit; font-size: 0.9rem; text-align: left; cursor: pointer; transition: color 0.2s ease;
     }
+
     .pf-links a:hover, .pf-links button:hover { color: var(--rose-accent); }
+
     .pf-links svg { color: var(--bronze-taupe); flex-shrink: 0; }
 
-    /* Edit dialog (mirrors the membership checkout modal) */
     .pf-overlay { display: none; position: fixed; inset: 0; z-index: 1000; align-items: center; justify-content: center; padding: 24px; background-color: rgba(0, 0, 0, 0.75); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+
     .pf-overlay.show { display: flex; }
+
     .pf-modal { width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; padding: 32px; background-color: var(--bg-cream); border: 1px solid var(--border-hairline); border-radius: 8px; box-shadow: 0 20px 48px rgba(0, 0, 0, 0.5); }
+
     .pf-modal-title { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: 1.4rem; font-weight: 700; margin-bottom: 6px; }
-    .pf-modal-sub { font-size: 0.82rem; color: #B3AA98; margin-bottom: 22px; }
+
+    .pf-modal-sub { font-size: 0.82rem; color: var(--text-2); margin-bottom: 22px; }
+
     .pf-form { display: grid; gap: 16px; }
+
     .pf-field { display: flex; flex-direction: column; gap: 6px; }
+
     .pf-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
     .pf-label { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-ink); }
+
     .pf-input {
       width: 100%; min-height: 42px; padding: 11px 14px;
       font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 15px; color: var(--text-ink);
       background-color: var(--card-white); border: 1px solid var(--border-hairline); border-radius: 4px; color-scheme: dark;
     }
-    .pf-input:focus { outline: 2px solid var(--rose-accent); border-color: var(--rose-accent); }
-    .pf-input.invalid { border-color: #FF6B60; }
-    .pf-input[readonly] { opacity: 0.65; cursor: not-allowed; }
-    textarea.pf-input { min-height: 88px; resize: vertical; }
-    .pf-hint { font-size: 0.72rem; color: #9C9284; }
-    .pf-error { display: none; font-size: 0.72rem; color: #FF6B60; }
-    .pf-error.show { display: block; }
-    .pf-alert { display: none; padding: 9px 13px; font-size: 0.78rem; color: #FF8A80; background: rgba(255, 107, 96, 0.12); border: 1px solid rgba(255, 107, 96, 0.4); border-radius: 8px; }
-    .pf-alert.show { display: block; }
-    .pf-modal-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px; margin-top: 8px; }
-    body.pf-modal-lock { overflow: hidden; }
 
-    @media (min-width: 720px) {
+    .pf-input:focus { outline: 2px solid var(--rose-accent); border-color: var(--rose-accent); }
+
+    .pf-input.invalid { border-color: #FF6B60; }
+
+    .pf-input[readonly] { opacity: 0.65; cursor: not-allowed; }
+
+    textarea.pf-input { min-height: 88px; resize: vertical; }
+
+    .pf-hint { font-size: 0.72rem; color: var(--text-3); }
+
+    .pf-error { display: none; font-size: 0.72rem; color: #FF6B60; }
+
+    .pf-error.show { display: block; }
+
+    .pf-alert { display: none; padding: 9px 13px; font-size: 0.78rem; color: #FF8A80; background: rgba(255, 107, 96, 0.12); border: 1px solid rgba(255, 107, 96, 0.4); border-radius: 8px; }
+
+    .pf-alert.show { display: block; }
+
+    .pf-modal-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px; margin-top: 8px; }
+
+    body.pf-modal-lock { overflow: hidden; }
+@media (min-width: 720px) {
       .pf-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-    }
-    @media (min-width: 980px) {
+}
+@media (min-width: 980px) {
       .pf-grid { grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); align-items: start; }
-    }
-    @media (max-width: 640px) {
+}
+@media (max-width: 640px) {
       .pf-summary { flex-direction: column; align-items: flex-start; padding: 24px 20px; }
+
       .pf-summary .pf-btn { width: 100%; }
+
       .pf-modal { padding: 24px 20px; }
-    }
-    @media (max-width: 560px) {
+}
+@media (max-width: 560px) {
       .pf-appt { grid-template-columns: 52px minmax(0, 1fr); gap: 14px; padding: 16px; }
+
       .pf-appt-trail { grid-column: 1 / -1; flex-direction: row; align-items: center; justify-content: space-between; }
+
       .pf-field-row { grid-template-columns: 1fr; }
-    }
-  </style>
+}
+</style>
   <style>
-    /* Smooth native page transition (no JS, no opacity hacks -> no flicker) */
     @view-transition {
       navigation: auto;
     }
-  </style>
+</style>
   <style>
-    /* Accessibility: skip link */
     .skip-link {
       position: absolute;
       top: -48px;
       left: 8px;
       z-index: 3000;
       background-color: var(--rose-accent, #C9A66B);
-      color: #15130E;
-      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; /* ← FONT-FAMILY UPDATED */
+      color: var(--on-primary);
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
       font-weight: 700;
       font-size: 0.85rem;
       padding: 10px 18px;
@@ -392,12 +458,11 @@ $profileData = [
       text-decoration: none;
       transition: top 0.2s ease;
     }
+
     .skip-link:focus {
       top: 8px;
     }
 
-
-    /* Accessibility: consistent visible focus styles across interactive elements */
     a:focus-visible,
     button:focus-visible,
     input:focus-visible,
@@ -409,31 +474,27 @@ $profileData = [
       outline-offset: 2px;
       border-radius: 4px;
     }
-
-    @media (prefers-reduced-motion: reduce) {
+@media (prefers-reduced-motion: reduce) {
       .reveal {
         opacity: 1;
         transform: none;
         transition: none;
       }
-    }
-
-  </style>
+}
+</style>
   <noscript>
     <style>
-      /* Accessibility: if JS fails to load, scroll-reveal content must still be visible */
       .reveal {
         opacity: 1 !important;
         transform: none !important;
         transition: none !important;
       }
-    </style>
+</style>
   </noscript>
   <link rel="stylesheet" href="assets/responsive.css?v=<?= filemtime(__DIR__ . '/assets/responsive.css') ?>">
 </head>
 <body>
   <a href="#main-content" class="skip-link">Skip to content</a>
-  <!-- Header -->
   <header class="site-header" id="siteHeader">
     <div class="container header-inner">
       <a href="index.php" class="brand-logo" aria-label="Deepkala Hair Salon Homepage">
@@ -468,9 +529,7 @@ $profileData = [
       </div>
     </div>
   </header>
-  <!-- Main Content -->
   <main id="main-content" tabindex="-1">
-    <!-- Page Hero -->
     <section class="page-hero">
       <div class="container reveal">
         <h1 class="font-serif">My Profile</h1>
@@ -482,8 +541,6 @@ $profileData = [
 
       <div class="pf-notice" id="pfNotice" role="status" aria-live="polite" hidden></div>
 
-      <!-- Signed-out state -->
-      <!-- Signed-in state (rendered by the profile script below) -->
       <div id="pfApp" hidden>
 
         <section class="pf-summary reveal" aria-label="Profile summary">
@@ -515,7 +572,6 @@ $profileData = [
 
         <div class="pf-grid">
 
-          <!-- Main column -->
           <div class="pf-col">
             <div class="category-header reveal">
               <h2 class="eyebrow-tag">Upcoming Appointment</h2>
@@ -530,7 +586,6 @@ $profileData = [
             <div id="pfHistory"></div>
           </div>
 
-          <!-- Side column -->
           <div class="pf-col">
             <div class="category-header reveal">
               <h2 class="eyebrow-tag">Wallet</h2>
@@ -564,7 +619,6 @@ $profileData = [
     </div>
   </main>
 
-  <!-- Edit Profile Dialog -->
   <div class="pf-overlay" id="pfEditOverlay">
     <div class="pf-modal" role="dialog" aria-modal="true" aria-labelledby="pfEditTitle">
       <h2 class="pf-modal-title" id="pfEditTitle">Edit Profile</h2>
@@ -600,65 +654,14 @@ $profileData = [
     </div>
   </div>
 
-  <!-- Footer -->
-  <footer class="dk-footer" id="site-footer">
-    <div class="container">
-      <div class="dk-footer-main">
+<?php include 'backend/footer.php'; ?>
 
-        <div class="dk-footer-brand">
-          <a href="index.php" class="brand-logo" aria-label="Deepkala Hair Salon"> <img src="assets/deepkala-emblem.png" width="34" height="34" alt="Deepkala Hair Salon" style="border-radius:6px;object-fit:cover;"> <div> <div class="logo-text-title">DEEPKALA</div> <div class="logo-text-sub">HAIR SALON</div> </div> </a>
-          <p class="dk-footer-desc">Master craftsmanship, precision haircuts, and dedicated personal grooming in Ghodasar, Ahmedabad.</p>
-          <div class="dk-footer-social">
-            <a href="https://wa.me/919924620958?text=Hi%20Deepkala%20Hair%20Salon" target="_blank" rel="noopener noreferrer" aria-label="Chat on WhatsApp" title="WhatsApp"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg></a>
-            <a href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" title="Instagram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></a>
-            <a href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer" aria-label="Facebook" title="Facebook"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
-          </div>
-        </div>
-
-        <nav class="dk-footer-col" aria-label="Quick Links">
-          <h3 class="dk-footer-title">Quick Links</h3>
-          <ul class="dk-footer-list">
-            <li><a href="index.php">Home</a></li>
-            <li><a href="services.php">Services</a></li>
-            <li><a href="reviews.php">Client Reviews</a></li>
-            <li><a href="about.php">About</a></li>
-          </ul>
-        </nav>
-
-        <nav class="dk-footer-col" aria-label="Book and Visit">
-          <h3 class="dk-footer-title">Book &amp; Visit</h3>
-          <ul class="dk-footer-list">
-            <li><a href="booking.php">Reserve Slot</a></li>
-            <li><a href="membership.php">Membership</a></li>
-            <li><a href="contact.php">Contact</a></li>
-          </ul>
-        </nav>
-
-        <div class="dk-footer-col dk-footer-contact">
-          <h3 class="dk-footer-title">Salon Info</h3>
-          <ul class="dk-footer-info">
-            <li><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12 19.5s-6.5-5.4-6.5-10.5a6.5 6.5 0 0113 0c0 5.1-6.5 10.5-6.5 10.5zM12 6.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5z"/><ellipse cx="12" cy="21.6" rx="5" ry="1.1" opacity=".55"/></svg><div><small>Salon Address</small><a href="https://www.google.com/maps/search/?api=1&query=2+Jayvimal+Society+Cadila+Road+Ghodasar+Ahmedabad+380050" target="_blank" rel="noopener noreferrer" title="Open in Google Maps">2 Jayvimal Society, Cadila Road, Ghodasar, Ahmedabad – 380050</a></div></li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg><div><small>Phone No</small><a href="tel:+919924620958">+91 99246 20958</a></div></li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><div><small>Timings</small>9:00 AM – 9:00 PM, Daily</div></li>
-          </ul>
-        </div>
-
-      </div>
-
-      <hr class="dk-footer-hr">
-      <p class="dk-footer-copy">© 2026 Deepkala Hair Salon. All rights reserved.</p>
-    </div>
-  </footer>
-
-  <!-- Floating WhatsApp Button -->
   <a href="https://wa.me/919924620958?text=Hi%20Deepkala%20Hair%20Salon%2C%20I%27d%20like%20to%20know%20more" class="whatsapp-float" target="_blank" rel="noopener noreferrer" title="Chat on WhatsApp">
     <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
   </a>
 
-  <!-- Shared Script -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // Scroll Reveal Observer
       const observerOptions = { threshold: 0.1 };
       const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
@@ -670,12 +673,11 @@ $profileData = [
 
       document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-      // Mobile Menu Toggle & Accessibility
       const menuBtn = document.getElementById('mobileMenuBtn');
       const navLinks = document.getElementById('navLinks');
       if (menuBtn && navLinks) {
         menuBtn.setAttribute('aria-expanded', 'false');
-        
+
         const toggleMenu = (show) => {
           const isOpen = show !== undefined ? show : !navLinks.classList.contains('show');
           navLinks.classList.toggle('show', isOpen);
@@ -687,27 +689,23 @@ $profileData = [
           toggleMenu();
         });
 
-        // Close when clicking outside menu
         document.addEventListener('click', (e) => {
           if (!navLinks.contains(e.target) && !menuBtn.contains(e.target)) {
             toggleMenu(false);
           }
         });
 
-        // Close on ESC key
         document.addEventListener('keydown', (e) => {
           if (e.key === 'Escape') {
             toggleMenu(false);
           }
         });
 
-        // Close when clicking a menu link
         navLinks.querySelectorAll('a').forEach(link => {
           link.addEventListener('click', () => toggleMenu(false));
         });
       }
 
-      // Sticky Header Shadow
       const header = document.getElementById('siteHeader');
       if (header) {
         window.addEventListener('scroll', () => {
@@ -722,7 +720,6 @@ $profileData = [
   </script>
 
   <script>
-    /* ===== Deepkala Membership & Auth (client-side demo, no backend) ===== */
     const DK_USER_KEY = 'dk_user';
     const DK_MEMBERSHIP_KEY = 'dk_membership';
 
@@ -739,7 +736,6 @@ $profileData = [
       return tier === 'gold' ? 'Gold Member' : tier === 'silver' ? 'Silver Member' : '';
     }
 
-    // Auto-apply member discount to every element with class "service-price"
     function dkApplyMemberPricing() {
       const membership = dkGetMembership();
       const priceEls = document.querySelectorAll('.service-price');
@@ -761,7 +757,6 @@ $profileData = [
       });
     }
 
-    // Render the header auth area: Login link, or account pill with member badge + logout
     function dkRenderAuthNav() {}
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -771,13 +766,12 @@ $profileData = [
   </script>
 
   <script>
-    /* ===== Deepkala Profile — data comes from MySQL via PHP (see top of this file) ===== */
     (function () {
       'use strict';
       const D = <?php echo json_encode($profileData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
       const PREVIEW = 5;
       const WHATSAPP_NUMBER = '919924620958';
-      const showAll = {};  // per list: expanded into a scroll box?
+      const showAll = {};
       let lastFocus = null;
       let noticeTimer = null;
 
@@ -874,7 +868,7 @@ $profileData = [
 
       function renderWallet() {
         const tx = D.txns || [];
-        let h = '<div class="pf-card"><p class="pf-card-title">Balance</p><p class="pf-stat-value" style="margin:6px 0 4px">' + money(D.wallet || 0) + '</p><p class="pf-card-text">Refunds land here. Tick &ldquo;Use wallet&rdquo; at checkout on your next booking.</p></div>';
+        let h = '<div class="pf-card"><p class="pf-card-title">Balance</p><p class="pf-stat-value" style="margin:6px 0 4px">' + money(D.wallet || 0) + '</p></div>';
         if (tx.length) {
           h += capped('wallet', tx.map((t) => {
             const cr = t.type === 'credit';
@@ -896,8 +890,8 @@ $profileData = [
         const today = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
         const ov = document.createElement('div');
         ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px';
-        const f = 'width:100%;padding:10px;border-radius:6px;border:1px solid #7A6C55;background:#221E17;color:#F3EEE2;font:inherit;margin:6px 0 12px';
-        ov.innerHTML = '<div style="background:#1E1A14;border:1px solid #7A6C55;border-radius:10px;padding:24px;max-width:380px;width:100%;color:#F3EEE2">' +
+        const f = 'width:100%;padding:10px;border-radius:6px;border:1px solid var(--border-strong);background:var(--surface-2);color:var(--text);font:inherit;margin:6px 0 12px';
+        ov.innerHTML = '<div style="background:var(--surface);border:1px solid var(--border-strong);border-radius:10px;padding:24px;max-width:380px;width:100%;color:var(--text)">' +
           '<h3 style="margin-bottom:14px">' + (rs ? 'Reschedule appointment' : 'Cancel appointment') + '</h3>' +
           (rs ? '<label style="font-size:.8rem">New date</label><input type="date" id="uaDate" min="' + today + '" style="' + f + '"><label style="font-size:.8rem">New time</label><select id="uaTime" style="' + f + '">' + slots.map((s) => '<option>' + s + '</option>').join('') + '</select>'
               : '<p style="font-size:.85rem;margin-bottom:12px;color:#A9884C">The full amount you paid will be added to your wallet.</p>') +
@@ -972,7 +966,6 @@ $profileData = [
         noticeTimer = setTimeout(() => { el.hidden = true; }, 5000);
       }
 
-      /* ---------- Edit dialog ---------- */
       function fieldError(id, show) {
         const err = $('err-' + id), input = $(id);
         if (err) err.classList.toggle('show', show);

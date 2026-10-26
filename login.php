@@ -1,63 +1,34 @@
 <?php
 require 'backend/config.php';
+require 'backend/mail.php';
 
-// Forgot-password OTP backend (AJAX from the popup below): action=send | verify
-if (in_array($_POST['action'] ?? '', ['send', 'verify'], true)) header('Content-Type: application/json');
+$act = $_POST['action'] ?? '';
+if (in_array($act, ['send', 'verify'], true)) header('Content-Type: application/json');
 
-// Tiny Gmail SMTP client (no library needed). Returns true if Gmail accepted the mail.
-function smtp_send($to, $subject, $body) {
-    // HTTPS relay (Google Apps Script) works on any network; college Wi-Fi usually blocks SMTP ports 465/587
-    if (MAIL_URL !== '') {
-        $r = @file_get_contents(MAIL_URL . '?' . http_build_query(['key' => MAIL_KEY, 'to' => $to, 'subject' => $subject, 'body' => $body]),
-            false, stream_context_create(['http' => ['timeout' => 15]]));
-        return $r !== false && trim($r) === 'ok';
-    }
-    $s = @stream_socket_client('ssl://smtp.gmail.com:465', $en, $es, 10);
-    if (!$s) return false;
-    $cmd = function ($c, $ok) use ($s) {
-        if ($c !== null) fwrite($s, $c . "\r\n");
-        do { $l = fgets($s, 512); } while ($l !== false && isset($l[3]) && $l[3] === '-');
-        return $l !== false && strncmp($l, $ok, 3) === 0;
-    };
-    $msg = "From: Deepkala Hair Salon <" . SMTP_USER . ">\r\nTo: $to\r\nSubject: $subject\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n$body";
-    $ok = $cmd(null, '220') && $cmd('EHLO localhost', '250') && $cmd('AUTH LOGIN', '334')
-        && $cmd(base64_encode(SMTP_USER), '334') && $cmd(base64_encode(SMTP_PASS), '235')
-        && $cmd('MAIL FROM:<' . SMTP_USER . '>', '250') && $cmd("RCPT TO:<$to>", '250')
-        && $cmd('DATA', '354') && $cmd($msg . "\r\n.", '250');
-    fwrite($s, "QUIT\r\n"); fclose($s);
-    return $ok;
+function out($ok, $msg = '', $extra = []) { echo json_encode(['ok' => $ok, 'msg' => $msg] + $extra); exit; }
+function safe_redirect($r) { return strpos($r, '//') !== false || strpos($r, ':') !== false ? 'index.php' : $r; }
+function login_user($u) {
+    foreach (['id' => 'user_id', 'name' => 'user_name', 'phone' => 'user_phone', 'email' => 'user_email', 'membership' => 'membership'] as $col => $key) $_SESSION[$key] = $u[$col];
 }
 
-// JSON endpoint used by the forgot-password popup on login.php (action=send | verify)
-function out($ok, $msg = '', $extra = []) { echo json_encode(['ok' => $ok, 'msg' => $msg] + $extra); exit; }
-if (($_POST['action'] ?? '') === 'send') {
+if ($act === 'send') {
     $email = strtolower(trim($_POST['email'] ?? ''));
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) out(false, 'Enter a valid email address.');
-    $st = mysqli_prepare($conn, "SELECT id FROM users WHERE email = ?");
-    mysqli_stmt_bind_param($st, 's', $email);
-    mysqli_stmt_execute($st);
+    $exists = row(q($conn, "SELECT id FROM users WHERE email = ?", $email));
+    $cooling = row(q($conn, "SELECT 1 FROM password_resets WHERE email = ? AND expires > DATE_ADD(NOW(), INTERVAL 570 SECOND)", $email));
     $sent = true;
-    $exists = mysqli_fetch_assoc(mysqli_stmt_get_result($st));
-    $st = mysqli_prepare($conn, "SELECT 1 FROM password_resets WHERE email = ? AND expires > DATE_ADD(NOW(), INTERVAL 570 SECOND)");
-    mysqli_stmt_bind_param($st, 's', $email);
-    mysqli_stmt_execute($st);
-    $cooling = mysqli_fetch_assoc(mysqli_stmt_get_result($st));
     if ($exists && !$cooling) {
         $otp = (string) random_int(100000, 999999);
-        $h = password_hash($otp, PASSWORD_DEFAULT);
-        $st = mysqli_prepare($conn, "REPLACE INTO password_resets (email, otp_hash, expires, tries) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 10 MINUTE), 0)");
-        mysqli_stmt_bind_param($st, 'ss', $email, $h);
-        mysqli_stmt_execute($st);
-        // shortcut: with no SMTP configured the OTP goes to the PHP log; set SMTP_USER/SMTP_PASS in config.php for real mail
+        q($conn, "REPLACE INTO password_resets (email, otp_hash, expires, tries) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 10 MINUTE), 0)", $email, password_hash($otp, PASSWORD_DEFAULT));
         if (MAIL_URL === '' && SMTP_PASS === '') error_log("Deepkala OTP for $email: $otp");
-        else $sent = smtp_send($email, 'Your Deepkala password reset OTP', "Your OTP is $otp. It is valid for 10 minutes.\nIf you did not request this, ignore this mail.");
+        else $sent = send_mail($email, 'Your Deepkala password reset OTP', "Your OTP is $otp. It is valid for 10 minutes.\nIf you did not request this, ignore this mail.");
     }
     if (!$sent) out(false, 'Could not send the email right now. Please try again later.');
-    $_SESSION['fp_email'] = $email;  // same reply whether or not the email exists
+    $_SESSION['fp_email'] = $email;
     out(true);
 }
 
-if (($_POST['action'] ?? '') === 'verify') {
+if ($act === 'verify') {
     $email = $_SESSION['fp_email'] ?? '';
     $otp = trim($_POST['otp'] ?? '');
     $pw = $_POST['password'] ?? '';
@@ -66,51 +37,29 @@ if (($_POST['action'] ?? '') === 'verify') {
     if (strlen($pw) < 8 || !preg_match('/[A-Za-z]/', $pw) || !preg_match('/[0-9]/', $pw)) out(false, 'Password must be at least 8 characters with a letter and a number.');
     if ($pw !== ($_POST['confirm'] ?? '')) out(false, 'Passwords do not match.');
 
-    $st = mysqli_prepare($conn, "SELECT otp_hash, tries, expires > NOW() AS live FROM password_resets WHERE email = ?");
-    mysqli_stmt_bind_param($st, 's', $email);
-    mysqli_stmt_execute($st);
-    $r = mysqli_fetch_assoc(mysqli_stmt_get_result($st));
+    $r = row(q($conn, "SELECT otp_hash, tries, expires > NOW() AS live FROM password_resets WHERE email = ?", $email));
     if (!$r || !$r['live'] || $r['tries'] >= 5) out(false, 'OTP expired or too many wrong attempts. Please request a new one.', ['restart' => true]);
     if (!password_verify($otp, $r['otp_hash'])) {
-        $st = mysqli_prepare($conn, "UPDATE password_resets SET tries = tries + 1 WHERE email = ?");
-        mysqli_stmt_bind_param($st, 's', $email);
-        mysqli_stmt_execute($st);
+        q($conn, "UPDATE password_resets SET tries = tries + 1 WHERE email = ?", $email);
         out(false, 'Wrong OTP.');
     }
-    // login.php compares passwords in plain text, so store it the same way
-    $st = mysqli_prepare($conn, "UPDATE users SET password = ? WHERE email = ?");
-    mysqli_stmt_bind_param($st, 'ss', $pw, $email);
-    mysqli_stmt_execute($st);
-    $st = mysqli_prepare($conn, "DELETE FROM password_resets WHERE email = ?");
-    mysqli_stmt_bind_param($st, 's', $email);
-    mysqli_stmt_execute($st);
+    q($conn, "UPDATE users SET password = ? WHERE email = ?", $pw, $email);
+    q($conn, "DELETE FROM password_resets WHERE email = ?", $email);
     unset($_SESSION['fp_email']);
 
-    // OTP proved email ownership, so log the user straight in (same session keys as login.php)
-    $st = mysqli_prepare($conn, "SELECT * FROM users WHERE email = ?");
-    mysqli_stmt_bind_param($st, 's', $email);
-    mysqli_stmt_execute($st);
-    $u = mysqli_fetch_assoc(mysqli_stmt_get_result($st));
     session_regenerate_id(true);
-    $_SESSION['user_id']    = $u['id'];
-    $_SESSION['user_name']  = $u['name'];
-    $_SESSION['user_phone'] = $u['phone'];
-    $_SESSION['user_email'] = $u['email'];
-    $_SESSION['membership'] = $u['membership'];
-    $redirect = $_POST['redirect'] ?? 'index.php';
-    if (strpos($redirect, '//') !== false || strpos($redirect, ':') !== false) $redirect = 'index.php';
-    out(true, '', ['redirect' => $redirect]);
+    login_user(row(q($conn, "SELECT * FROM users WHERE email = ?", $email)));
+    out(true, '', ['redirect' => safe_redirect($_POST['redirect'] ?? 'index.php')]);
 }
+
 $errors = [];
 $emailValue = '';
-$redirect = $_GET['redirect'] ?? 'index.php';
-if (strpos($redirect, '//') !== false || strpos($redirect, ':') !== false) $redirect = 'index.php';
+$redirect = safe_redirect($_GET['redirect'] ?? 'index.php');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $emailValue = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
-    $redirect = $_POST['redirect'] ?? 'index.php';
-    if (strpos($redirect, '//') !== false || strpos($redirect, ':') !== false) $redirect = 'index.php';
+    $redirect = safe_redirect($_POST['redirect'] ?? 'index.php');
 
     if (!filter_var($emailValue, FILTER_VALIDATE_EMAIL)) $errors['email'] = 'That does not look like a valid email address.';
     if ($password === '') $errors['password'] = 'Please enter your password.';
@@ -118,11 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$errors) {
         $email = strtolower($emailValue);
 
-        // 1) Admin check
-        $st = mysqli_prepare($conn, "SELECT id, name, password_hash FROM admins WHERE email = ?");
-        mysqli_stmt_bind_param($st, 's', $email);
-        mysqli_stmt_execute($st);
-        $admin = mysqli_fetch_assoc(mysqli_stmt_get_result($st));
+        $admin = row(q($conn, "SELECT id, name, password_hash FROM admins WHERE email = ?", $email));
         if ($admin && password_verify($password, $admin['password_hash'])) {
             session_regenerate_id(true);
             $_SESSION['admin_id'] = $admin['id'];
@@ -131,17 +76,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
-        // 2) Customer check
-        $st = mysqli_prepare($conn, "SELECT * FROM users WHERE email = ? AND password = ?");
-        mysqli_stmt_bind_param($st, 'ss', $email, $password);
-        mysqli_stmt_execute($st);
-        $user = mysqli_fetch_assoc(mysqli_stmt_get_result($st));
+        $user = row(q($conn, "SELECT * FROM users WHERE email = ? AND password = ?", $email, $password));
         if ($user) {
-            $_SESSION['user_id']    = $user['id'];
-            $_SESSION['user_name']  = $user['name'];
-            $_SESSION['user_phone'] = $user['phone'];
-            $_SESSION['user_email'] = $user['email'];
-            $_SESSION['membership'] = $user['membership'];
+            login_user($user);
             header('Location: ' . $redirect);
             exit;
         }
@@ -157,22 +94,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet">
 <link rel="icon" type="image/png" href="assets/deepkala-emblem.png">
+<link rel="stylesheet" href="assets/theme.css?v=<?= filemtime(__DIR__ . '/assets/theme.css') ?>">
 <style>
-  /* Theme tokens: swap these to restyle the whole page (e.g. light theme) */
   :root {
-    --bg: #15130E;
-    --panel: #1E1A14;
-    --field: #221E17;
-    --ink: #F3EEE2;
-    --muted: #A9884C;
-    --hairline: #7A6C55;
-    --accent: #C9A66B;
-    --accent-hover: #B8935A;
-    --on-accent: #15130E;
-    --danger: #E0665A;
+    --panel: var(--surface);
+    --field: var(--surface-2);
+    --ink: var(--text);
+    --muted: var(--gold-muted);
+    --hairline: var(--border-strong);
+    --accent: var(--primary);
+    --accent-hover: var(--primary-hover);
+    --on-accent: var(--on-primary);
+    --danger: var(--error);
   }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
+
   html, body { height: 100%; }
+
   body {
     font-family: 'Inter', sans-serif;
     background: var(--bg);
@@ -182,11 +121,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     min-height: 100vh;
   }
 
-  /* ===== Page shell: two columns (form | visual) + footer ===== */
   .page { flex: 1; display: grid; grid-template-columns: 1fr 1fr; }
 
-  /* ===== Left: form column ===== */
   .form-col { display: flex; align-items: center; justify-content: center; padding: 40px 24px; }
+
   .form-wrap { width: 100%; max-width: 350px; }
 
   h1 {
@@ -196,8 +134,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     font-weight: 700;
     margin-bottom: 10px;
   }
+
   .signup-line { font-size: 0.78rem; color: var(--muted); margin-bottom: 28px; }
-  .signup-line a{ color: var(--accent); text-decoration: none; font-weight: 600; }  .signup-line a:hover{ text-decoration: underline; }
+
+  .signup-line a{ color: var(--accent); text-decoration: none; font-weight: 600; }
+
+  .signup-line a:hover{ text-decoration: underline; }
+
   .error {
     background: rgba(224,102,90,0.12);
     border: 1px solid var(--danger);
@@ -209,6 +152,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   }
 
   .field-group { margin-bottom: 12px; position: relative; }
+
   .field-group input {
     width: 100%;
     padding: 14px 16px;
@@ -220,10 +164,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     font-family: inherit;
     transition: border-color .2s;
   }
+
   .field-group input::placeholder { color: var(--hairline); }
+
   .field-group input:focus { outline: none; border-color: var(--accent); }
+
   .field-group input.invalid { border-color: var(--danger); }
+
   .field-group input.has-toggle { padding-right: 56px; }
+
   .field-error { display: block; font-size: 0.74rem; color: var(--danger); margin-top: 5px; }
 
   .pw-toggle {
@@ -231,9 +180,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     background: none; border: none; width: auto; padding: 6px 8px;
     color: var(--muted); font-size: 0.72rem; font-weight: 400; cursor: pointer; border-radius: 6px;
   }
+
   .pw-toggle:hover { color: var(--accent); background: none; }
 
-  /* Primary button (equivalent of "Continue with email") */
   .btn-primary {
     width: 100%; margin-top: 8px;
     padding: 14px;
@@ -243,13 +192,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     font-weight: 700; font-size: 0.88rem; font-family: inherit;
     cursor: pointer; transition: background .2s;
   }
+
   .btn-primary:hover { background: var(--accent-hover); }
 
-  /* "Or" divider */
+  .loading { pointer-events: none; opacity: .7; }
+
+  .forgot.loading::after { content: '…'; }
+
+  .btn-primary.loading { position: relative; color: transparent; }
+
+  .btn-primary.loading::after {
+    content: ''; position: absolute; inset: 0; margin: auto; width: 18px; height: 18px;
+    border: 2px solid var(--on-accent); border-right-color: transparent; border-radius: 50%;
+    animation: fpSpin .7s linear infinite;
+  }
+
+  @keyframes fpSpin { to { transform: rotate(360deg); } }
+
   .divider { display: flex; align-items: center; gap: 12px; margin: 18px 0; font-size: 0.72rem; color: var(--hairline); }
+
   .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--hairline); opacity: .6; }
 
-  /* Secondary outlined buttons (equivalent of QR / Google rows) */
   .btn-secondary {
     display: flex; align-items: center; justify-content: center; gap: 10px;
     width: 100%; margin-bottom: 10px;
@@ -261,40 +224,60 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     font-size: 0.82rem; font-weight: 600;
     transition: border-color .2s, color .2s;
   }
+
   .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
   button.btn-secondary { font-family: inherit; cursor: pointer; }
+
   .btn-secondary svg { flex-shrink: 0; }
+
   .demo-note { font-size: 0.74rem; color: var(--muted); text-align: center; margin: 2px 0 4px; }
 
-
-  /* ===== Right: visual column ===== */
   .visual-col { display: flex; align-items: center; justify-content: center; padding: 24px; overflow: hidden;
     background: radial-gradient(ellipse at 60% 45%, rgba(201,166,107,0.10), transparent 65%); }
+
   .visual-col svg { width: 100%; max-width: 500px; height: auto; }
-
-
-  /* ===== Responsive: visual drops away on tablet/mobile ===== */
-  @media (max-width: 860px) {
+@media (max-width: 860px) {
     .page { grid-template-columns: 1fr; }
+
     .visual-col { display: none; }
-  }
+}
+
   .back-link { display: inline-block; margin-bottom: 22px; font-size: 0.78rem; color: var(--muted); text-decoration: none; }
+
   .back-link:hover { color: var(--accent); }
+
   .forgot { display: block; text-align: right; margin: -4px 0 4px; font-size: 0.74rem; color: var(--accent); text-decoration: none; }
+
   .forgot:hover { text-decoration: underline; }
+
   .modal-bg { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(10,8,5,.55); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+
   .modal-bg[hidden] { display: none; }
+
   .modal { width: 100%; max-width: 360px; background: var(--panel); border: 1px solid var(--hairline); border-radius: 14px; padding: 26px 22px; }
+
   .modal h2 { font-family: 'Playfair Display', serif; font-size: 1.3rem; margin-bottom: 8px; }
+
   .modal p { font-size: .78rem; color: var(--muted); margin-bottom: 18px; }
+
   .modal input { width: 100%; padding: 14px 16px; margin-bottom: 8px; border-radius: 10px; border: 1px solid transparent; background: var(--field); color: var(--ink); font-size: .9rem; font-family: inherit; }
+
   .modal input:focus { outline: none; border-color: var(--accent); }
+
   @keyframes fpFade { from { opacity: 0; backdrop-filter: blur(0); -webkit-backdrop-filter: blur(0); } }
+
   @keyframes fpPop { from { opacity: 0; transform: translateY(18px) scale(.94); } 60% { transform: translateY(-3px) scale(1.01); } }
+
   .modal-bg { animation: fpFade .3s ease; }
+
   .modal { animation: fpPop .4s cubic-bezier(.2,.8,.3,1); }
+
   #resetFields { animation: fpPop .4s ease; }
-  @media (prefers-reduced-motion: reduce) { .modal-bg, .modal, #resetFields { animation: none; } }
+@media (prefers-reduced-motion: reduce) {
+ .modal-bg, .modal, #resetFields { animation: none; }
+}
+
   [hidden] { display: none !important; }
 </style>
 </head>
@@ -302,7 +285,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <div class="page">
 
-  <!-- ============ LEFT: FORM AREA ============ -->
   <main class="form-col">
     <div class="form-wrap">
       <a class="back-link" href="<?php echo htmlspecialchars($redirect); ?>">&larr; Back to site</a>
@@ -351,8 +333,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
       <div class="divider">Or</div>
 
-      <!-- Social sign-in: DEMO ONLY. Buttons are not wired to any provider.
-           To make them real later, replace the click handler with an OAuth redirect. -->
       <button type="button" class="btn-secondary" data-demo="Google">
         <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.52 12.27c0-.85-.08-1.67-.22-2.45H12v4.64h6.46a5.52 5.52 0 0 1-2.4 3.62v3h3.88c2.27-2.09 3.58-5.17 3.58-8.81z"/><path fill="#34A853" d="M12 24c3.24 0 5.96-1.07 7.94-2.91l-3.88-3a7.2 7.2 0 0 1-10.7-3.78H1.4v3.1A12 12 0 0 0 12 24z"/><path fill="#FBBC05" d="M5.36 14.31a7.2 7.2 0 0 1 0-4.62v-3.1H1.4a12 12 0 0 0 0 10.82l3.96-3.1z"/><path fill="#EA4335" d="M12 4.75c1.76 0 3.34.6 4.58 1.8l3.43-3.43A12 12 0 0 0 1.4 6.59l3.96 3.1A7.2 7.2 0 0 1 12 4.75z"/></svg>
         Continue with Google
@@ -365,7 +345,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
   </main>
 
-  <!-- ============ RIGHT: VISUAL ELEMENT ============ -->
   <aside class="visual-col" aria-hidden="true">
     <svg viewBox="0 0 480 550" xmlns="http://www.w3.org/2000/svg">
       <defs>
@@ -379,7 +358,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <radialGradient id="lampGlow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#F6DDA4" stop-opacity=".6"/><stop offset="1" stop-color="#F6DDA4" stop-opacity="0"/></radialGradient>
         <radialGradient id="bgGlow" cx=".5" cy=".45" r=".6"><stop offset="0" stop-color="#C9A66B" stop-opacity=".16"/><stop offset="1" stop-color="#C9A66B" stop-opacity="0"/></radialGradient>
         <pattern id="pole" width="30" height="30" patternUnits="userSpaceOnUse" patternTransform="rotate(-38)">
-          <rect width="10" height="30" fill="#C9A66B"/><rect x="10" width="10" height="30" fill="#F3EEE2"/><rect x="20" width="10" height="30" fill="#8a3a33"/>
+          <rect width="10" height="30" fill="#C9A66B"/><rect x="10" width="10" height="30" fill="#FFFFFF"/><rect x="20" width="10" height="30" fill="#8a3a33"/>
         </pattern>
         <pattern id="tile" width="48" height="24" patternUnits="userSpaceOnUse">
           <path d="M24 0 L48 12 L24 24 L0 12Z" fill="none" stroke="#C9A66B" stroke-width="1" opacity=".22"/>
@@ -390,12 +369,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
       <ellipse cx="240" cy="270" rx="250" ry="270" fill="url(#bgGlow)"/>
 
-      <!-- Floor with diamond tiles -->
       <rect x="0" y="470" width="480" height="80" fill="url(#tile)"/>
       <rect x="0" y="470" width="480" height="80" fill="url(#floorFade)"/>
       <line x1="16" y1="470" x2="464" y2="470" stroke="#7A6C55" stroke-width="1" opacity=".6"/>
 
-      <!-- Arched mirror with double frame -->
       <path d="M98 470 V190 A142 142 0 0 1 382 190 V470" fill="none" stroke="#7A6C55" stroke-width="1" opacity=".7"/>
       <g filter="url(#soft)">
         <path d="M110 470 V190 A130 130 0 0 1 370 190 V470 Z" fill="url(#glass)" stroke="url(#gold)" stroke-width="3.5"/>
@@ -409,7 +386,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </g>
       <path d="M240 40 L249 51 L240 62 L231 51Z" fill="url(#gold)"/>
 
-      <!-- Pendant lamp -->
       <line x1="240" y1="62" x2="240" y2="124" stroke="url(#gold)" stroke-width="1.5"/>
       <path d="M214 148 Q240 106 266 148 Z" fill="url(#gold)"/>
       <rect x="212" y="147" width="56" height="4" rx="2" fill="#F0DDB0"/>
@@ -421,7 +397,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <path transform="translate(330 196) scale(.5)" d="M0 -9 L2.2 -2.2 L9 0 L2.2 2.2 L0 9 L-2.2 2.2 L-9 0 L-2.2 -2.2Z" opacity=".6"/>
       </g>
 
-      <!-- Wall sconces (symmetrical pair, kept small) -->
       <g transform="translate(52 168) scale(.62)">
         <circle cx="0" cy="20" r="62" fill="url(#lampGlow)" opacity=".5"/>
         <rect x="-5" y="-6" width="10" height="34" rx="4" fill="url(#gold)"/>
@@ -435,7 +410,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <ellipse cx="0" cy="27" rx="9" ry="3.5" fill="#FFF0C8"/>
       </g>
 
-      <!-- Potted plant (left) -->
       <g transform="translate(52 470)">
         <path d="M0 -66 C-3 -120 -5 -170 -4 -226" fill="none" stroke="#4b5a36" stroke-width="3" stroke-linecap="round"/>
         <g fill="url(#leaf)" stroke="#34412a" stroke-width="1">
@@ -449,7 +423,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <rect x="-27" y="-72" width="54" height="9" rx="3" fill="url(#gold)"/>
       </g>
 
-      <!-- Barber chair -->
       <ellipse cx="240" cy="476" rx="104" ry="10" fill="#000" opacity=".4"/>
       <g>
         <ellipse cx="240" cy="466" rx="54" ry="9" fill="url(#chrome)"/>
@@ -472,7 +445,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </g>
       </g>
 
-      <!-- Barber pole (right) -->
       <g filter="url(#soft)" transform="translate(18 0)">
         <rect x="406" y="438" width="8" height="32" fill="url(#gold)"/>
         <rect x="398" y="284" width="24" height="146" rx="10" fill="url(#pole)" stroke="#A9884C" stroke-width="1"/>
@@ -482,8 +454,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <circle cx="410" cy="266" r="7" fill="url(#gold)"/>
       </g>
 
-
-      <!-- Brand name: light, wide-spaced serif in gold, flanked by thin rules -->
       <line x1="96" y1="510" x2="138" y2="510" stroke="url(#gold)" stroke-width="1" opacity=".7"/>
       <line x1="342" y1="510" x2="384" y2="510" stroke="url(#gold)" stroke-width="1" opacity=".7"/>
       <text x="245" y="518" text-anchor="middle" font-family="'Cormorant Garamond', 'Playfair Display', Georgia, serif" font-size="26" font-weight="600" letter-spacing="9" fill="url(#gold)">DEEPKALA</text>
@@ -492,7 +462,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 </div>
 
-<!-- Forgot-password popup -->
 <div class="modal-bg" id="fpModal" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="fpTitle">
     <h2 id="fpTitle">Reset password</h2>
@@ -504,9 +473,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   </div>
 </div>
 
-
 <script>
-  // Demo-only social buttons: no real sign-in, just a notice
   (function () {
     var note = document.getElementById('demoNote');
     document.querySelectorAll('[data-demo]').forEach(function (b) {
@@ -517,7 +484,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     });
   })();
 
-  // Show/hide password toggle
   (function () {
     var btn = document.getElementById('pwToggle');
     var input = document.getElementById('password');
@@ -528,15 +494,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
     });
   })();
-  // Forgot password: popup (email) -> login form swaps to OTP / new password / confirm -> verified = logged in
   (function () {
     var $ = function (id) { return document.getElementById(id); };
     var modal = $('fpModal'), form = $('loginForm'), mode = 'login', mail, timer;
-    function post(data) {
-      var body = new URLSearchParams(data);
-      return fetch('login.php', { method: 'POST', body: body }).then(function (r) { return r.json(); });
-    }
     function show(el, msg) { el.textContent = msg; el.hidden = !msg; }
+    function call(btn, errEl, data, done) {
+      if (btn.classList.contains('loading')) return;
+      btn.classList.add('loading');
+      fetch('login.php', { method: 'POST', body: new URLSearchParams(data) })
+        .then(function (r) { return r.json(); })
+        .then(done)
+        .catch(function () { show(errEl, 'Network error. Try again.'); })
+        .then(function () { btn.classList.remove('loading'); });
+    }
     function setMode(m) {
       mode = m;
       var reset = m === 'reset';
@@ -547,7 +517,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     $('fpOpen').addEventListener('click', function (e) { e.preventDefault(); show($('fpErr'), ''); $('fpEmail').value = $('email').value; modal.hidden = false; $('fpEmail').focus(); });
     $('fpClose').addEventListener('click', function (e) { e.preventDefault(); modal.hidden = true; });
-    // 30s wait between OTP mails (server enforces it too)
     function cool(n) {
       var a = $('fpResend');
       clearTimeout(timer);
@@ -558,16 +527,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $('fpResend').addEventListener('click', function (e) {
       e.preventDefault();
       if (this.dataset.wait) return;
-      post({ action: 'send', email: mail }).then(function (d) {
+      call(this, $('resetErr'), { action: 'send', email: mail }, function (d) {
         if (!d.ok) return show($('resetErr'), d.msg);
         show($('resetErr'), '');
         $('resetInfo').textContent = 'A new OTP was sent to ' + mail + '. Valid for 10 minutes.';
         cool(30);
-      }).catch(function () { show($('resetErr'), 'Network error. Try again.'); });
+      });
     });
     $('fpSend').addEventListener('click', function () {
       var email = $('fpEmail').value.trim();
-      post({ action: 'send', email: email }).then(function (d) {
+      call(this, $('fpErr'), { action: 'send', email: email }, function (d) {
         if (!d.ok) return show($('fpErr'), d.msg);
         modal.hidden = true;
         mail = email;
@@ -575,16 +544,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $('resetInfo').textContent = 'If ' + email + ' has an account, an OTP was sent. Valid for 10 minutes.';
         setMode('reset');
         $('fpOtp').focus();
-      }).catch(function () { show($('fpErr'), 'Network error. Try again.'); });
+      });
     });
     form.addEventListener('submit', function (e) {
       if (mode !== 'reset') return;
       e.preventDefault();
-      post({ action: 'verify', otp: $('fpOtp').value, password: $('fpPw').value, confirm: $('fpPw2').value, redirect: form.redirect.value }).then(function (d) {
+      call($('mainBtn'), $('resetErr'), { action: 'verify', otp: $('fpOtp').value, password: $('fpPw').value, confirm: $('fpPw2').value, redirect: form.redirect.value }, function (d) {
         if (d.ok) location.href = d.redirect;
         else if (d.restart) { setMode('login'); show($('fpErr'), d.msg); modal.hidden = false; }
         else show($('resetErr'), d.msg);
-      }).catch(function () { show($('resetErr'), 'Network error. Try again.'); });
+      });
     });
   })();
 </script>

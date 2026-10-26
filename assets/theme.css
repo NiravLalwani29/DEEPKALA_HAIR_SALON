@@ -1,0 +1,51 @@
+:root {
+  color-scheme: dark;
+
+  --bg:             #15130E;
+  --surface:        #1E1A14;
+  --surface-2:      #26211A;
+
+  --text:           #FFFFFF;
+  --text-2:         #B3AA98;
+  --text-3:         #8F8676;
+
+  --primary:        #C9A66B;
+  --primary-hover:  #D9B97E;
+  --on-primary:     #15130E;
+  --gold-muted:     #A9884C;
+
+  --brand:          #9A4631;
+  --on-brand:       #FFFFFF;
+
+  --highlight:      #FFD666;
+
+  --border-strong:  #7A6C55;
+
+  --success:        #5FB57A;
+  --warning:        #E5A03C;
+  --error:          #E0665A;
+
+  --whatsapp:       #25D366;
+  --whatsapp-hover: #20BA56;
+  --on-whatsapp:    #0F2A1A;
+
+  --ink-deep:       #0A0806;
+
+  --bg-cream:          var(--bg);
+  --text-ink:          var(--text);
+  --rose-accent:       var(--primary);
+  --rose-accent-hover: var(--primary-hover);
+  --rose-deep:         var(--ink-deep);
+  --bronze-taupe:      var(--gold-muted);
+  --card-white:        var(--surface);
+  --card-cream:        var(--surface-2);
+  --border-hairline:   var(--border-strong);
+  --whatsapp-green:    var(--whatsapp);
+  --gold-glow:         var(--highlight);
+}
+
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+

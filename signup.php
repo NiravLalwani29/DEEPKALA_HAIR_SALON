@@ -14,30 +14,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $emailValue = trim($_POST['email']);
     $password = $_POST['password'];
 
-    // ---- Validation ----
-
-    // Name: at least 2 characters, letters and spaces only
     if ($nameValue === '') {
         $errors['name'] = "Please enter your full name.";
     } elseif (!preg_match('/^[A-Za-z ]{2,60}$/', $nameValue)) {
         $errors['name'] = "Name should only contain letters and spaces.";
     }
 
-    // Phone: 10-digit Indian mobile number (optionally with +91 in front)
     if ($phoneValue === '') {
         $errors['phone'] = "Please enter your phone number.";
     } elseif (!preg_match('/^(\+91[\-\s]?)?[6-9]\d{9}$/', $phoneValue)) {
         $errors['phone'] = "Enter a valid 10-digit Indian mobile number.";
     }
 
-    // Email: standard format
     if ($emailValue === '') {
         $errors['email'] = "Please enter your email.";
     } elseif (!filter_var($emailValue, FILTER_VALIDATE_EMAIL)) {
         $errors['email'] = "That doesn't look like a valid email address.";
     }
 
-    // Password: at least 8 characters, with at least one letter and one number
     if ($password === '') {
         $errors['password'] = "Please enter a password.";
     } elseif (strlen($password) < 8) {
@@ -46,7 +40,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $errors['password'] = "Password must contain at least one letter and one number.";
     }
 
-    // ---- If the format is fine, check the database ----
     if (empty($errors)) {
         $email = mysqli_real_escape_string($conn, strtolower($emailValue));
 
@@ -58,12 +51,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $phone = mysqli_real_escape_string($conn, $phoneValue);
             $passwordEscaped = mysqli_real_escape_string($conn, $password);
 
-            // Create the new account (membership starts as 'none')
             $sql = "INSERT INTO users (name, phone, email, password, membership)
                     VALUES ('$name', '$phone', '$email', '$passwordEscaped', 'none')";
             mysqli_query($conn, $sql);
 
-            // Log the new user in straight away
             $newId = mysqli_insert_id($conn);
             $_SESSION['user_id']    = $newId;
             $_SESSION['user_name']  = $name;
@@ -87,22 +78,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet">
 <link rel="icon" type="image/png" href="assets/deepkala-emblem.png">
+<link rel="stylesheet" href="assets/theme.css?v=<?= filemtime(__DIR__ . '/assets/theme.css') ?>">
 <style>
-  /* Theme tokens: swap these to restyle the whole page (e.g. light theme) */
   :root {
-    --bg: #15130E;
-    --panel: #1E1A14;
-    --field: #221E17;
-    --ink: #F3EEE2;
-    --muted: #A9884C;
-    --hairline: #7A6C55;
-    --accent: #C9A66B;
-    --accent-hover: #B8935A;
-    --on-accent: #15130E;
-    --danger: #E0665A;
+    --panel: var(--surface);
+    --field: var(--surface-2);
+    --ink: var(--text);
+    --muted: var(--gold-muted);
+    --hairline: var(--border-strong);
+    --accent: var(--primary);
+    --accent-hover: var(--primary-hover);
+    --on-accent: var(--on-primary);
+    --danger: var(--error);
   }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
+
   html, body { height: 100%; }
+
   body {
     font-family: 'Inter', sans-serif;
     background: var(--bg);
@@ -112,11 +105,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     min-height: 100vh;
   }
 
-  /* ===== Page shell: two columns (form | visual) + footer ===== */
   .page { flex: 1; display: grid; grid-template-columns: 1fr 1fr; }
 
-  /* ===== Left: form column ===== */
   .form-col { display: flex; align-items: center; justify-content: center; padding: 40px 24px; }
+
   .form-wrap { width: 100%; max-width: 330px; }
 
   h1 {
@@ -126,10 +118,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     font-weight: 700;
     margin-bottom: 10px;
   }
+
   .signup-line { font-size: 0.78rem; color: var(--muted); margin-bottom: 28px; }
-  .signup-line a{ color: var(--accent); text-decoration: none; font-weight: 600; }  .signup-line a:hover{ text-decoration: underline; }
+
+  .signup-line a{ color: var(--accent); text-decoration: none; font-weight: 600; }
+
+  .signup-line a:hover{ text-decoration: underline; }
 
   .field-group { margin-bottom: 12px; position: relative; }
+
   .field-group input {
     width: 100%;
     padding: 14px 16px;
@@ -141,10 +138,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     font-family: inherit;
     transition: border-color .2s;
   }
+
   .field-group input::placeholder { color: var(--hairline); }
+
   .field-group input:focus { outline: none; border-color: var(--accent); }
+
   .field-group input.invalid { border-color: var(--danger); }
+
   .field-group input.has-toggle { padding-right: 56px; }
+
   .field-error { display: block; font-size: 0.74rem; color: var(--danger); margin-top: 5px; }
 
   .pw-toggle {
@@ -152,9 +154,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     background: none; border: none; width: auto; padding: 6px 8px;
     color: var(--muted); font-size: 0.72rem; font-weight: 400; cursor: pointer; border-radius: 6px;
   }
+
   .pw-toggle:hover { color: var(--accent); background: none; }
 
-  /* Primary button (equivalent of "Continue with email") */
   .btn-primary {
     width: 100%; margin-top: 8px;
     padding: 14px;
@@ -164,13 +166,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     font-weight: 700; font-size: 0.88rem; font-family: inherit;
     cursor: pointer; transition: background .2s;
   }
+
   .btn-primary:hover { background: var(--accent-hover); }
 
-  /* "Or" divider */
   .divider { display: flex; align-items: center; gap: 12px; margin: 18px 0; font-size: 0.72rem; color: var(--hairline); }
+
   .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--hairline); opacity: .6; }
 
-  /* Secondary outlined buttons (equivalent of QR / Google rows) */
   .btn-secondary {
     display: flex; align-items: center; justify-content: center; gap: 10px;
     width: 100%; margin-bottom: 10px;
@@ -182,25 +184,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     font-size: 0.82rem; font-weight: 600;
     transition: border-color .2s, color .2s;
   }
+
   .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
   button.btn-secondary { font-family: inherit; cursor: pointer; }
+
   .btn-secondary svg { flex-shrink: 0; }
+
   .demo-note { font-size: 0.74rem; color: var(--muted); text-align: center; margin: 2px 0 4px; }
 
-
-  /* ===== Right: visual column ===== */
   .visual-col { display: flex; align-items: center; justify-content: center; padding: 24px; overflow: hidden;
     background: radial-gradient(ellipse at 60% 45%, rgba(201,166,107,0.10), transparent 65%); }
+
   .visual-col svg { width: 100%; max-width: 500px; height: auto; }
-
-
-  /* ===== Responsive: visual drops away on tablet/mobile ===== */
-  @media (max-width: 860px) {
+@media (max-width: 860px) {
     .page { grid-template-columns: 1fr; }
+
     .visual-col { display: none; }
-  }
+}
+
   .form-wrap { max-width: 350px; }
+
   .back-link { display: inline-block; margin-bottom: 22px; font-size: 0.78rem; color: var(--muted); text-decoration: none; }
+
   .back-link:hover { color: var(--accent); }
 </style>
 
@@ -209,7 +215,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 <div class="page">
 
-  <!-- ============ LEFT: FORM AREA ============ -->
   <main class="form-col">
     <div class="form-wrap">
       <a class="back-link" href="index.php">&larr; Back to site</a>
@@ -241,8 +246,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
       <div class="divider">Or</div>
 
-      <!-- Social sign-in: DEMO ONLY. Buttons are not wired to any provider.
-           To make them real later, replace the click handler with an OAuth redirect. -->
       <button type="button" class="btn-secondary" data-demo="Google">
         <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.52 12.27c0-.85-.08-1.67-.22-2.45H12v4.64h6.46a5.52 5.52 0 0 1-2.4 3.62v3h3.88c2.27-2.09 3.58-5.17 3.58-8.81z"/><path fill="#34A853" d="M12 24c3.24 0 5.96-1.07 7.94-2.91l-3.88-3a7.2 7.2 0 0 1-10.7-3.78H1.4v3.1A12 12 0 0 0 12 24z"/><path fill="#FBBC05" d="M5.36 14.31a7.2 7.2 0 0 1 0-4.62v-3.1H1.4a12 12 0 0 0 0 10.82l3.96-3.1z"/><path fill="#EA4335" d="M12 4.75c1.76 0 3.34.6 4.58 1.8l3.43-3.43A12 12 0 0 0 1.4 6.59l3.96 3.1A7.2 7.2 0 0 1 12 4.75z"/></svg>
         Continue with Google
@@ -255,7 +258,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </div>
   </main>
 
-  <!-- ============ RIGHT: VISUAL ELEMENT ============ -->
   <aside class="visual-col" aria-hidden="true">
     <svg viewBox="0 0 480 550" xmlns="http://www.w3.org/2000/svg">
       <defs>
@@ -269,7 +271,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <radialGradient id="lampGlow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#F6DDA4" stop-opacity=".6"/><stop offset="1" stop-color="#F6DDA4" stop-opacity="0"/></radialGradient>
         <radialGradient id="bgGlow" cx=".5" cy=".45" r=".6"><stop offset="0" stop-color="#C9A66B" stop-opacity=".16"/><stop offset="1" stop-color="#C9A66B" stop-opacity="0"/></radialGradient>
         <pattern id="pole" width="30" height="30" patternUnits="userSpaceOnUse" patternTransform="rotate(-38)">
-          <rect width="10" height="30" fill="#C9A66B"/><rect x="10" width="10" height="30" fill="#F3EEE2"/><rect x="20" width="10" height="30" fill="#8a3a33"/>
+          <rect width="10" height="30" fill="#C9A66B"/><rect x="10" width="10" height="30" fill="#FFFFFF"/><rect x="20" width="10" height="30" fill="#8a3a33"/>
         </pattern>
         <pattern id="tile" width="48" height="24" patternUnits="userSpaceOnUse">
           <path d="M24 0 L48 12 L24 24 L0 12Z" fill="none" stroke="#C9A66B" stroke-width="1" opacity=".22"/>
@@ -280,12 +282,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
       <ellipse cx="240" cy="270" rx="250" ry="270" fill="url(#bgGlow)"/>
 
-      <!-- Floor with diamond tiles -->
       <rect x="0" y="470" width="480" height="80" fill="url(#tile)"/>
       <rect x="0" y="470" width="480" height="80" fill="url(#floorFade)"/>
       <line x1="16" y1="470" x2="464" y2="470" stroke="#7A6C55" stroke-width="1" opacity=".6"/>
 
-      <!-- Arched mirror with double frame -->
       <path d="M98 470 V190 A142 142 0 0 1 382 190 V470" fill="none" stroke="#7A6C55" stroke-width="1" opacity=".7"/>
       <g filter="url(#soft)">
         <path d="M110 470 V190 A130 130 0 0 1 370 190 V470 Z" fill="url(#glass)" stroke="url(#gold)" stroke-width="3.5"/>
@@ -299,7 +299,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
       </g>
       <path d="M240 40 L249 51 L240 62 L231 51Z" fill="url(#gold)"/>
 
-      <!-- Pendant lamp -->
       <line x1="240" y1="62" x2="240" y2="124" stroke="url(#gold)" stroke-width="1.5"/>
       <path d="M214 148 Q240 106 266 148 Z" fill="url(#gold)"/>
       <rect x="212" y="147" width="56" height="4" rx="2" fill="#F0DDB0"/>
@@ -311,7 +310,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <path transform="translate(330 196) scale(.5)" d="M0 -9 L2.2 -2.2 L9 0 L2.2 2.2 L0 9 L-2.2 2.2 L-9 0 L-2.2 -2.2Z" opacity=".6"/>
       </g>
 
-      <!-- Wall sconces (symmetrical pair, kept small) -->
       <g transform="translate(52 168) scale(.62)">
         <circle cx="0" cy="20" r="62" fill="url(#lampGlow)" opacity=".5"/>
         <rect x="-5" y="-6" width="10" height="34" rx="4" fill="url(#gold)"/>
@@ -325,7 +323,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <ellipse cx="0" cy="27" rx="9" ry="3.5" fill="#FFF0C8"/>
       </g>
 
-      <!-- Potted plant (left) -->
       <g transform="translate(52 470)">
         <path d="M0 -66 C-3 -120 -5 -170 -4 -226" fill="none" stroke="#4b5a36" stroke-width="3" stroke-linecap="round"/>
         <g fill="url(#leaf)" stroke="#34412a" stroke-width="1">
@@ -339,7 +336,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <rect x="-27" y="-72" width="54" height="9" rx="3" fill="url(#gold)"/>
       </g>
 
-      <!-- Barber chair -->
       <ellipse cx="240" cy="476" rx="104" ry="10" fill="#000" opacity=".4"/>
       <g>
         <ellipse cx="240" cy="466" rx="54" ry="9" fill="url(#chrome)"/>
@@ -362,7 +358,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </g>
       </g>
 
-      <!-- Barber pole (right) -->
       <g filter="url(#soft)" transform="translate(18 0)">
         <rect x="406" y="438" width="8" height="32" fill="url(#gold)"/>
         <rect x="398" y="284" width="24" height="146" rx="10" fill="url(#pole)" stroke="#A9884C" stroke-width="1"/>
@@ -372,8 +367,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <circle cx="410" cy="266" r="7" fill="url(#gold)"/>
       </g>
 
-
-      <!-- Brand name: light, wide-spaced serif in gold, flanked by thin rules -->
       <line x1="96" y1="510" x2="138" y2="510" stroke="url(#gold)" stroke-width="1" opacity=".7"/>
       <line x1="342" y1="510" x2="384" y2="510" stroke="url(#gold)" stroke-width="1" opacity=".7"/>
       <text x="245" y="518" text-anchor="middle" font-family="'Cormorant Garamond', 'Playfair Display', Georgia, serif" font-size="26" font-weight="600" letter-spacing="9" fill="url(#gold)">DEEPKALA</text>
@@ -382,9 +375,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 </div>
 
-
 <script>
-  // Show/hide password toggle
   (function () {
     var btn = document.getElementById('pwToggle');
     var input = document.getElementById('password');

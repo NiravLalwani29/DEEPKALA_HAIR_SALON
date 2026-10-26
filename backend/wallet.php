@@ -1,6 +1,7 @@
 <?php
-// Shared helpers: time slots, wallet, cancel + reschedule (used by admin and customer)
 const DK_SLOTS = ['09:00 AM','10:00 AM','11:00 AM','12:00 PM','01:00 PM','02:00 PM','03:00 PM','04:00 PM','05:00 PM','06:00 PM','07:00 PM','08:00 PM'];
+
+function slot_passed($date, $time) { return strtotime("$date $time") <= time(); }
 
 function wallet_log($conn, $uid, $apptId, $type, $amt, $why) {
     $st = mysqli_prepare($conn, "INSERT INTO wallet_txn (user_id, appointment_id, type, amount, reason) VALUES (?,?,?,?,?)");
@@ -15,7 +16,6 @@ function wallet_credit($conn, $uid, $amt, $apptId, $why) {
     mysqli_stmt_execute($st);
     wallet_log($conn, $uid, $apptId, 'credit', $amt, $why);
 }
-/* returns the new transaction id, or 0 if balance is not enough */
 function wallet_debit($conn, $uid, $amt, $why) {
     $st = mysqli_prepare($conn, "UPDATE users SET wallet = wallet - ? WHERE id = ? AND wallet >= ?");
     mysqli_stmt_bind_param($st, 'iii', $amt, $uid, $amt);
@@ -24,7 +24,6 @@ function wallet_debit($conn, $uid, $amt, $why) {
     return wallet_log($conn, $uid, null, 'debit', $amt, $why);
 }
 
-/* Cancel + refund the full amount to the customer's wallet. Returns null on success, or an error text. */
 function cancel_appt($conn, $id, $by, $reason) {
     mysqli_begin_transaction($conn);
     try {
@@ -49,7 +48,6 @@ function cancel_appt($conn, $id, $by, $reason) {
     }
 }
 
-/* Stylists (id => name) free at a slot: not booked there and not on leave that day. $skip = appointment id to ignore (reschedule). */
 function free_barbers($conn, $date, $time, $skip = 0) {
     $st = mysqli_prepare($conn, "SELECT id, name FROM barbers
         WHERE id NOT IN (SELECT barber_id FROM appointments WHERE appointment_date=? AND appointment_time=? AND status<>'cancelled' AND id<>?)
@@ -59,12 +57,12 @@ function free_barbers($conn, $date, $time, $skip = 0) {
     return array_column(mysqli_fetch_all(mysqli_stmt_get_result($st), MYSQLI_ASSOC), 'name', 'id');
 }
 
-/* Move an appointment to a new date/time (barber auto-picked). Returns null on success, or an error text. */
 function reschedule_appt($conn, $id, $by, $date, $time, $reason) {
     $d = DateTime::createFromFormat('Y-m-d', $date);
     if (!$d || $d->format('Y-m-d') !== $date) return 'Choose a valid date.';
     if ($date < date('Y-m-d')) return 'The new date cannot be in the past.';
     if (!in_array($time, DK_SLOTS, true)) return 'Choose a valid time slot.';
+    if (slot_passed($date, $time)) return 'That time has already passed. Pick a later slot.';
 
     mysqli_begin_transaction($conn);
     try {

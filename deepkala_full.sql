@@ -102,6 +102,12 @@ CREATE TABLE IF NOT EXISTS password_resets (
     tries    INT NOT NULL DEFAULT 0
 );
 
+CREATE TABLE IF NOT EXISTS subscribers (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  email VARCHAR(190) NOT NULL UNIQUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Default admin (password Admin@123). Skipped if this email already exists.
 INSERT IGNORE INTO admins (name, email, password_hash)
 VALUES ('Owner', 'admin@deepkala.com', '$2y$10$6oCnfususRwBp/ic3d5b2um6Lirv2rrtcB1yXQAJQ9Xc/0acaE8Zu');

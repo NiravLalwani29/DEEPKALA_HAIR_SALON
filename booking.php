@@ -18,14 +18,12 @@ $bookedMethod = "";
 
 $barbers = array_column(mysqli_fetch_all(mysqli_query($conn, "SELECT id, name FROM barbers ORDER BY id"), MYSQLI_ASSOC), 'name', 'id');
 
-// Live availability check used by the booking form (returns free stylists as {id: name})
 if (isset($_GET['avail'])) {
     header('Content-Type: application/json');
     echo json_encode(free_barbers($conn, $_GET['d'] ?? '', $_GET['t'] ?? ''), JSON_FORCE_OBJECT);
     exit;
 }
 
-// This runs only when the "Pay & Confirm Booking" button is clicked
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['confirm_booking'])) {
 
     if (!$isLoggedIn) {
@@ -40,20 +38,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['confirm_booking'])) {
         $method  = mysqli_real_escape_string($conn, $_POST['paymentMethod']);
         $amount  = (int) $_POST['amount'];
 
-        // Apply the member discount on the server too, so it can't be changed from the browser
         $membership = $_SESSION['membership'];
         if ($membership == 'gold') {
-            $amount = round($amount * 0.80);   // 20% off
+            $amount = round($amount * 0.80);
         } else if ($membership == 'silver') {
-            $amount = round($amount * 0.90);   // 10% off
+            $amount = round($amount * 0.90);
         }
 
-        // Stylist is optional: 0 = auto-assign any free one
         $pref = (int) ($_POST['stylist'] ?? 0);
         if (!isset($barbers[$pref])) $pref = 0;
         $free = free_barbers($conn, $date, $time);
 
-        if (!$free) {
+        if (slot_passed($date, $time)) {
+            $bookingMessage = "That time slot has already passed. Please choose a later slot.";
+        } elseif (!$free) {
             $bookingMessage = "All stylists are busy at that time. Please choose another slot or date.";
         } elseif ($pref && !isset($free[$pref])) {
             $bookingMessage = $barbers[$pref] . " is unavailable then. Try another slot, date or stylist: " . implode(', ', $free) . ".";
@@ -63,7 +61,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['confirm_booking'])) {
 
             $txnId = 'TXN' . rand(10000000, 99999999);
 
-            // ---- Wallet: use saved balance first (only if the customer ticked the box) ----
             $uidW = (int) $_SESSION['user_id'];
             $walletUse = 0;
             $walletTxn = 0;
@@ -104,7 +101,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['confirm_booking'])) {
     }
 }
 
-// Wallet balance shown on the payment step
 $walletBalance = 0;
 if ($isLoggedIn) {
     $wr = mysqli_fetch_assoc(mysqli_query($conn, "SELECT wallet FROM users WHERE id = " . (int) $_SESSION['user_id']));
@@ -119,15 +115,13 @@ if ($isLoggedIn) {
   <title>Reserve Appointment — Deepkala Hair Salon, Ahmedabad</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-  <!-- Favicon SVG Monogram -->
   <link rel="icon" type="image/png" href="assets/deepkala-emblem.png">
 
-  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <!-- FONT-FAMILY UPDATED: Fraunces + Karla → Playfair Display + Inter -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
 
+  <link rel="stylesheet" href="assets/theme.css?v=<?= filemtime(__DIR__ . '/assets/theme.css') ?>">
   <style>
     * {
       box-sizing: border-box;
@@ -135,22 +129,9 @@ if ($isLoggedIn) {
       padding: 0;
     }
 
-    :root {
-      --bg-cream: #15130E;
-      --text-ink: #F3EEE2;
-      --rose-accent: #C9A66B;
-      --rose-accent-hover: #B8935A;
-      --rose-deep: #0A0806;
-      --bronze-taupe: #A9884C;
-      --card-white: #1E1A14;
-      --card-cream: #221E17;
-      --border-hairline: #7A6C55;
-      --whatsapp-green: #25D366;
-    }
-
     html {
       scroll-behavior: smooth;
-      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; /* ← FONT-FAMILY UPDATED */
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
       background-color: var(--bg-cream);
       color: var(--text-ink);
       line-height: 1.6;
@@ -186,23 +167,21 @@ if ($isLoggedIn) {
       margin: 0 auto;
       padding: 0 24px;
     }
-
-    @media (max-width: 768px) {
+@media (max-width: 768px) {
       .container {
         padding: 0 16px;
       }
-    }
-
-    @media (max-width: 380px) {
+}
+@media (max-width: 380px) {
       .container {
         padding: 0 12px;
       }
-    }
+}
 
-    .font-serif { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; /* ← FONT-FAMILY UPDATED */ }
-    h1.font-serif { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; /* ← FONT-FAMILY UPDATED */ font-variation-settings: "opsz" 144, "SOFT" 0, "WONK" 0; }
+    .font-serif { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; }
 
-    /* Header */
+    h1.font-serif { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-variation-settings: "opsz" 144, "SOFT" 0, "WONK" 0; }
+
     .site-header {
       position: sticky;
       top: 0;
@@ -223,7 +202,7 @@ if ($isLoggedIn) {
     .brand-logo { display: flex; align-items: center; gap: 12px; }
 
     .logo-text-title {
-      font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; /* ← FONT-FAMILY UPDATED */
+      font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
       font-variation-settings: "opsz" 144, "SOFT" 0, "WONK" 0;
       font-size: 1.25rem;
       font-weight: 700;
@@ -233,7 +212,7 @@ if ($isLoggedIn) {
     }
 
     .logo-text-sub {
-      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; /* ← FONT-FAMILY UPDATED */
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
       font-size: 0.65rem;
       font-weight: 600;
       text-transform: uppercase;
@@ -274,7 +253,7 @@ if ($isLoggedIn) {
       letter-spacing: 0.06em;
       text-transform: uppercase;
       background-color: var(--rose-accent);
-      color: #15130E;
+      color: var(--on-primary);
       border: 1px solid var(--rose-accent);
       border-radius: 4px;
       transition: all 0.2s ease;
@@ -284,7 +263,7 @@ if ($isLoggedIn) {
     .header-book-btn:hover {
       background-color: var(--rose-accent-hover);
       border-color: var(--rose-accent-hover);
-      color: #15130E;
+      color: var(--on-primary);
       transform: translateY(-1px);
       box-shadow: 0 4px 12px rgba(10, 8, 6, 0.35);
     }
@@ -297,7 +276,7 @@ if ($isLoggedIn) {
       width: 100%;
       padding: 10px 16px;
       background-color: var(--whatsapp-green);
-      color: #15130E !important;
+      color: var(--on-whatsapp) !important;
       font-size: 0.85rem;
       font-weight: 600;
       border-radius: 4px;
@@ -306,8 +285,8 @@ if ($isLoggedIn) {
     }
 
     .btn-whatsapp-cta:hover {
-      background-color: #20BA56;
-      color: #15130E !important;
+      background-color: var(--whatsapp-hover);
+      color: var(--on-whatsapp) !important;
     }
 
     .mobile-toggle {
@@ -319,7 +298,6 @@ if ($isLoggedIn) {
       color: var(--text-ink);
     }
 
-    /* Page Hero */
     .page-hero {
       position: relative;
       padding: 60px 0 40px 0;
@@ -338,7 +316,7 @@ if ($isLoggedIn) {
       background-image:
         radial-gradient(circle at 25% 20%, rgba(201,166,107,0.12), transparent 55%),
         radial-gradient(circle at 80% 85%, rgba(201,166,107,0.07), transparent 50%),
-        repeating-linear-gradient(135deg, rgba(243,238,226,0.04) 0px, rgba(243,238,226,0.04) 1px, transparent 1px, transparent 9px),
+        repeating-linear-gradient(135deg, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px, transparent 1px, transparent 9px),
         repeating-linear-gradient(45deg, rgba(0,0,0,0.22) 0px, rgba(0,0,0,0.22) 1px, transparent 1px, transparent 9px),
         url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
       background-size: auto, auto, auto, auto, 180px 180px;
@@ -368,20 +346,15 @@ if ($isLoggedIn) {
 
     .page-hero p {
       font-size: 1rem;
-      color: #B3AA98;
+      color: var(--text-2);
       max-width: 620px;
       margin: 0 auto;
     }
 
-
-
-
-
-    /* Eyebrow Header */
     .eyebrow-tag {
       display: inline-block;
-      background-color: var(--text-ink);
-      color: var(--bg-cream);
+      background-color: var(--brand);
+      color: var(--on-brand);
       padding: 6px 14px;
       font-size: 0.75rem;
       font-weight: 700;
@@ -402,7 +375,6 @@ if ($isLoggedIn) {
       background-color: var(--border-hairline);
     }
 
-    /* Form Container */
     .booking-card {
       background-color: var(--card-white);
       border: 1px solid var(--border-hairline);
@@ -416,10 +388,9 @@ if ($isLoggedIn) {
       grid-template-columns: 1fr;
       gap: 20px;
     }
-
-    @media (min-width: 768px) {
+@media (min-width: 768px) {
       .booking-grid { grid-template-columns: 1fr 1fr; }
-    }
+}
 
     .form-group {
       display: flex;
@@ -443,7 +414,7 @@ if ($isLoggedIn) {
       padding: 12px 16px;
       border: 1px solid var(--border-hairline);
       background-color: var(--bg-cream);
-      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; /* ← FONT-FAMILY UPDATED */
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
       font-size: 16px;
       color: var(--text-ink);
       width: 100%;
@@ -462,7 +433,7 @@ if ($isLoggedIn) {
       justify-content: center;
       gap: 12px;
       background-color: var(--rose-accent);
-      color: #15130E;
+      color: var(--on-primary);
       padding: 16px 32px;
       font-size: 0.875rem;
       font-weight: 600;
@@ -480,8 +451,6 @@ if ($isLoggedIn) {
       border-color: var(--rose-accent-hover);
     }
 
-
-    /* Checkout Step Indicator */
     .checkout-steps {
       display: flex;
       align-items: center;
@@ -498,7 +467,7 @@ if ($isLoggedIn) {
       font-weight: 600;
       letter-spacing: 0.06em;
       text-transform: uppercase;
-      color: #9C9284;
+      color: var(--text-3);
       transition: color 0.2s ease;
     }
 
@@ -510,14 +479,15 @@ if ($isLoggedIn) {
       display: flex;
       align-items: center;
       justify-content: center;
-      font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; /* ← FONT-FAMILY UPDATED */
+      font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
       font-size: 0.82rem;
-      color: #9C9284;
+      color: var(--text-3);
       background-color: var(--bg-cream);
       transition: all 0.2s ease;
     }
 
     .checkout-step.active { color: var(--rose-accent); }
+
     .checkout-step.active .checkout-step-num {
       border-color: var(--rose-deep);
       background-color: var(--rose-deep);
@@ -535,7 +505,6 @@ if ($isLoggedIn) {
       background-color: var(--border-hairline);
     }
 
-    /* Booking Summary Bar (shown in Step 2) */
     .booking-summary-bar {
       display: flex;
       align-items: center;
@@ -550,7 +519,7 @@ if ($isLoggedIn) {
 
     .booking-summary-text {
       font-size: 0.85rem;
-      color: #B3AA98;
+      color: var(--text-2);
       line-height: 1.5;
     }
 
@@ -593,7 +562,6 @@ if ($isLoggedIn) {
       border-color: var(--rose-accent);
     }
 
-    /* Payment Section */
     .payment-section {
       grid-column: 1 / -1;
       margin-top: 8px;
@@ -618,11 +586,11 @@ if ($isLoggedIn) {
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.08em;
-      color: #B3AA98;
+      color: var(--text-2);
     }
 
     .payment-amount-value {
-      font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; /* ← FONT-FAMILY UPDATED */
+      font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
       font-size: 1.5rem;
       font-weight: 700;
       color: var(--rose-accent);
@@ -694,9 +662,11 @@ if ($isLoggedIn) {
     }
 
     .pay-fields { display: none; }
-    .pay-fields.active { display: grid; grid-template-columns: 1fr; gap: 20px; }
-    @media (min-width: 768px) { .pay-fields.active { grid-template-columns: 1fr 1fr; } }
 
+    .pay-fields.active { display: grid; grid-template-columns: 1fr; gap: 20px; }
+@media (min-width: 768px) {
+ .pay-fields.active { grid-template-columns: 1fr 1fr; }
+}
 
     .field-error {
       font-size: 0.75rem;
@@ -704,13 +674,13 @@ if ($isLoggedIn) {
       margin-top: 2px;
       display: none;
     }
+
     .field-error.show { display: block; }
+
     .form-input.invalid { border-color: #FF6B60; }
 
     @keyframes spin { to { transform: rotate(360deg); } }
 
-
-    /* Modal / Success Confirmation */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -739,9 +709,6 @@ if ($isLoggedIn) {
       border-radius: 4px;
     }
 
-
-
-    /* ===== Receipt Printer ===== */
     .rp-wrap {
       position: relative;
       width: 100%;
@@ -810,7 +777,7 @@ if ($isLoggedIn) {
     .rp-screen-label {
       font-size: 0.76rem;
       font-weight: 600;
-      color: #E4DCC8;
+      color: #FFFFFF;
       letter-spacing: 0.04em;
     }
 
@@ -831,24 +798,16 @@ if ($isLoggedIn) {
     }
 
     .rp-paper {
-      font-family: 'Inter', ui-monospace, SFMono-Regular, Menlo, monospace; /* ← FONT-FAMILY UPDATED */
-      background-color: #F3EEE2;
-      color: #15130E;
+      font-family: 'Inter', ui-monospace, SFMono-Regular, Menlo, monospace;
+      background-color: #FFFFFF;
+      color: var(--on-primary);
       padding: 22px 16px 26px 16px;
       transform: translateY(calc(-100% + 2px));
       position: relative;
       box-shadow: none;
-      /* Exact 40-tooth perforated edge, generated with the same
-         receiptToothCount/receiptToothDepth math as the source
-         component (40 teeth, 4px depth). */
       clip-path: polygon(0 0, 100% 0, 100% calc(100% - 4px), 98.75% 100%, 97.5% calc(100% - 4px), 96.25% 100%, 95% calc(100% - 4px), 93.75% 100%, 92.5% calc(100% - 4px), 91.25% 100%, 90% calc(100% - 4px), 88.75% 100%, 87.5% calc(100% - 4px), 86.25% 100%, 85% calc(100% - 4px), 83.75% 100%, 82.5% calc(100% - 4px), 81.25% 100%, 80% calc(100% - 4px), 78.75% 100%, 77.5% calc(100% - 4px), 76.25% 100%, 75% calc(100% - 4px), 73.75% 100%, 72.5% calc(100% - 4px), 71.25% 100%, 70% calc(100% - 4px), 68.75% 100%, 67.5% calc(100% - 4px), 66.25% 100%, 65% calc(100% - 4px), 63.75% 100%, 62.5% calc(100% - 4px), 61.25% 100%, 60% calc(100% - 4px), 58.75% 100%, 57.5% calc(100% - 4px), 56.25% 100%, 55% calc(100% - 4px), 53.75% 100%, 52.5% calc(100% - 4px), 51.25% 100%, 50% calc(100% - 4px), 48.75% 100%, 47.5% calc(100% - 4px), 46.25% 100%, 45% calc(100% - 4px), 43.75% 100%, 42.5% calc(100% - 4px), 41.25% 100%, 40% calc(100% - 4px), 38.75% 100%, 37.5% calc(100% - 4px), 36.25% 100%, 35% calc(100% - 4px), 33.75% 100%, 32.5% calc(100% - 4px), 31.25% 100%, 30% calc(100% - 4px), 28.75% 100%, 27.5% calc(100% - 4px), 26.25% 100%, 25% calc(100% - 4px), 23.75% 100%, 22.5% calc(100% - 4px), 21.25% 100%, 20% calc(100% - 4px), 18.75% 100%, 17.5% calc(100% - 4px), 16.25% 100%, 15% calc(100% - 4px), 13.75% 100%, 12.5% calc(100% - 4px), 11.25% 100%, 10% calc(100% - 4px), 8.75% 100%, 7.5% calc(100% - 4px), 6.25% 100%, 5% calc(100% - 4px), 3.75% 100%, 2.5% calc(100% - 4px), 1.25% 100%, 0% calc(100% - 4px));
     }
 
-    /* Authentic thermal-printer feed: paper advances in short jerky
-       bursts with tiny pauses in between, like the print head is
-       stepping the paper forward line by line rather than gliding out
-       smoothly. Values/timings copied 1:1 from printingTransformKeyframes
-       / printingKeyframeTimes in the reference component. */
     @keyframes rp-print-feed {
       0%    { transform: translateY(calc(-100% + 2px)); }
       7.5%  { transform: translateY(-91%); }
@@ -880,9 +839,6 @@ if ($isLoggedIn) {
       transform: translateY(0%);
     }
 
-    /* The paper mask itself fades in the instant the stage leaves
-       "processing" — matching the source's isReceiptVisible opacity
-       gate (0.16s ease-out) rather than relying on transform alone. */
     .rp-paper-mask {
       opacity: 0;
       transition: opacity 0.16s cubic-bezier(0.23, 1, 0.32, 1);
@@ -893,8 +849,6 @@ if ($isLoggedIn) {
       opacity: 1;
     }
 
-    /* Light-leak line where the paper emerges from the printer slot,
-       sitting above the receipt while it feeds/rests. */
     .rp-paper-mask::before {
       content: '';
       position: absolute;
@@ -909,10 +863,15 @@ if ($isLoggedIn) {
     }
 
     .rp-line { font-size: 0.78rem; line-height: 1.6; }
+
     .rp-center { text-align: center; }
+
     .rp-bold { font-weight: 700; }
-    .rp-muted { color: #7A7160; }
+
+    .rp-muted { color: var(--text-3); }
+
     .rp-dashed { border-top: 1px dashed #B9AF9B; margin: 10px 0; }
+
     .rp-row {
       display: flex;
       justify-content: space-between;
@@ -944,11 +903,8 @@ if ($isLoggedIn) {
       display: flex;
     }
 
-
-
-    /* keep footer at page bottom on short pages */
     main { flex: 1 0 auto; }
-    /* Floating WhatsApp Button */
+
     .whatsapp-float {
       position: fixed;
       bottom: max(20px, env(safe-area-inset-bottom, 20px));
@@ -958,7 +914,7 @@ if ($isLoggedIn) {
       min-width: 48px;
       min-height: 48px;
       background-color: var(--whatsapp-green);
-      color: #15130E;
+      color: var(--on-whatsapp);
       border-radius: 50%;
       display: flex;
       align-items: center;
@@ -977,13 +933,13 @@ if ($isLoggedIn) {
       opacity: 0; transform: translateY(20px);
       transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
     }
+
     .reveal.active { opacity: 1; transform: translateY(0); }
 
     .mobile-menu-cta {
       display: none;
     }
-
-    @media (max-width: 860px) {
+@media (max-width: 860px) {
       .nav-links {
         display: none;
         position: absolute;
@@ -1030,24 +986,25 @@ if ($isLoggedIn) {
         border-radius: 4px;
       }
 
-
       .mobile-menu-cta {
         display: block;
         margin-top: 8px;
       }
-    }
-      /* ===== Deepkala Membership & Auth (shared) ===== */
+}
+
     .dk-price-old {
       text-decoration: line-through;
-      color: #8A8171;
+      color: var(--text-3);
       font-size: 0.78em;
       font-weight: 500;
       margin-right: 2px;
     }
+
     .dk-price-new {
       color: var(--rose-accent);
       font-weight: 700;
     }
+
     .dk-member-priced {
       display: inline-flex;
       align-items: baseline;
@@ -1055,6 +1012,7 @@ if ($isLoggedIn) {
       flex-wrap: wrap;
       justify-content: flex-end;
     }
+
     .dk-member-badge {
       font-size: 0.6rem;
       font-weight: 700;
@@ -1064,37 +1022,39 @@ if ($isLoggedIn) {
       border-radius: 4px;
       white-space: nowrap;
     }
+
     .dk-badge-silver {
       background-color: rgba(201, 166, 107, 0.15);
       color: #C9A66B;
       border: 1px solid rgba(201, 166, 107, 0.4);
     }
+
     .dk-badge-gold {
       background-color: rgba(255, 214, 102, 0.15);
-      color: #FFD666;
+      color: var(--highlight);
       border: 1px solid rgba(255, 214, 102, 0.45);
     }
+
 .nav-member-badge { margin-left: 8px; font-size: 0.55rem !important; padding: 2px 7px !important; vertical-align: middle; }
 
+    .stylist-msg { display:block; margin-top:6px; color:#e0665a; font-size:.8rem; line-height:1.4; }
 
-    .stylist-msg { display:block; margin-top:6px; color:#e0665a; font-size:.8rem; line-height:1.4; } .stylist-msg:empty { display:none; }
+ .stylist-msg:empty { display:none; }
 </style>
   <style>
-    /* Smooth native page transition (no JS, no opacity hacks -> no flicker) */
     @view-transition {
       navigation: auto;
     }
-  </style>
+</style>
   <style>
-    /* Accessibility: skip link */
     .skip-link {
       position: absolute;
       top: -48px;
       left: 8px;
       z-index: 3000;
       background-color: var(--rose-accent, #C9A66B);
-      color: #15130E;
-      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; /* ← FONT-FAMILY UPDATED */
+      color: var(--on-primary);
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
       font-weight: 700;
       font-size: 0.85rem;
       padding: 10px 18px;
@@ -1102,11 +1062,11 @@ if ($isLoggedIn) {
       text-decoration: none;
       transition: top 0.2s ease;
     }
+
     .skip-link:focus {
       top: 8px;
     }
 
-    /* Accessibility: consistent visible focus styles across interactive elements */
     a:focus-visible,
     button:focus-visible,
     input:focus-visible,
@@ -1118,32 +1078,28 @@ if ($isLoggedIn) {
       outline-offset: 2px;
       border-radius: 4px;
     }
-
-    @media (prefers-reduced-motion: reduce) {
+@media (prefers-reduced-motion: reduce) {
       .reveal {
         opacity: 1;
         transform: none;
         transition: none;
       }
-    }
-
-  </style>
+}
+</style>
   <noscript>
     <style>
-      /* Accessibility: if JS fails to load, scroll-reveal content must still be visible */
       .reveal {
         opacity: 1 !important;
         transform: none !important;
         transition: none !important;
       }
-    </style>
+</style>
   </noscript>
   <link rel="stylesheet" href="assets/responsive.css?v=<?= filemtime(__DIR__ . '/assets/responsive.css') ?>">
 </head>
 <body>
   <a href="#main-content" class="skip-link">Skip to content</a>
 
-  <!-- Header -->
   <header class="site-header" id="siteHeader">
     <div class="container header-inner">
       <a href="index.php" class="brand-logo" aria-label="Deepkala Hair Salon">
@@ -1183,7 +1139,6 @@ if ($isLoggedIn) {
     </div>
   </header>
   <script>
-    // Membership tier badge next to "Membership" nav link, if the user has one
     var userMembership = "<?php echo $_SESSION['membership'] ?? 'none'; ?>";
     var walletBalance = <?php echo (int) $walletBalance; ?>;
     var walletCover = 0;
@@ -1196,9 +1151,7 @@ if ($isLoggedIn) {
     })();
   </script>
 
-
   <main id="main-content" tabindex="-1">
-    <!-- Page Hero -->
     <section class="page-hero">
       <div class="container reveal">
 <h1 class="font-serif">Reserve Your Appointment</h1>
@@ -1206,7 +1159,7 @@ if ($isLoggedIn) {
     </section>
 
     <div class="container" style="padding-bottom: 60px;">
-      
+
       <div class="category-header reveal">
         <span class="eyebrow-tag">APPOINTMENT RESERVATION</span>
         <div class="hairline"></div>
@@ -1222,7 +1175,6 @@ if ($isLoggedIn) {
 
         <?php if (!$isLoggedIn) { ?>
 
-          <!-- Not logged in — simple message + links to the login/signup pages -->
           <div style="text-align:center;padding:50px 20px;">
             <p style="margin-bottom:20px;font-size:1rem;">Please login to book an appointment.</p>
             <a href="login.php?redirect=<?php echo urlencode($dkBookUrl); ?>" class="header-book-btn" style="margin-right:10px;">Login</a>
@@ -1248,10 +1200,9 @@ if ($isLoggedIn) {
           <input type="hidden" id="hiddenAmount" name="amount" value="0">
           <input type="hidden" id="hiddenPaymentMethod" name="paymentMethod" value="">
 
-          <!-- STEP 1: Reservation Details -->
           <div id="step1Panel">
           <div class="booking-grid">
-            
+
             <div class="form-group">
               <label class="form-label" for="bName">Your Full Name *</label>
               <input type="text" id="bName" name="fullName" class="form-input" placeholder="Full Name" autocomplete="name" required value="<?php echo htmlspecialchars($_SESSION['user_name'] ?? ''); ?>">
@@ -1350,7 +1301,7 @@ if ($isLoggedIn) {
               <label class="form-label" for="bStylist">Preferred Stylist (optional)</label>
               <select id="bStylist" name="stylist" class="form-select">
                 <option value="0">Any available stylist</option>
-                <?php foreach ($barbers as $bid => $bn) { echo '<option value="' . (int) $bid . '">' . htmlspecialchars($bn) . '</option>'; } ?>
+                <?php $want = array_search($_GET['stylist'] ?? '', $barbers); foreach ($barbers as $bid => $bn) { echo '<option value="' . (int) $bid . '"' . ($bid === $want ? ' selected' : '') . '>' . htmlspecialchars($bn) . '</option>'; } ?>
               </select>
               <small id="stylistMsg" class="stylist-msg" role="status"></small>
             </div>
@@ -1369,9 +1320,7 @@ if ($isLoggedIn) {
             </button>
           </div>
           </div>
-          <!-- END STEP 1 -->
 
-          <!-- STEP 2: Payment -->
           <div id="step2Panel" style="display: none;">
 
           <div class="booking-summary-bar">
@@ -1380,7 +1329,6 @@ if ($isLoggedIn) {
           </div>
 
           <div class="booking-grid">
-            <!-- Payment Section -->
             <div class="form-group full payment-section" style="border-top: none; padding-top: 0; margin-top: 0;">
               <label class="form-label" style="margin-bottom: 14px; display: block;">
                 Payment
@@ -1410,7 +1358,6 @@ if ($isLoggedIn) {
                 </label>
               </fieldset>
 
-              <!-- Card Fields -->
               <div class="pay-fields active" id="cardFields">
                 <div class="form-group full">
                   <label class="form-label" for="cardName">Name on Card *</label>
@@ -1434,7 +1381,6 @@ if ($isLoggedIn) {
                 </div>
               </div>
 
-              <!-- UPI Fields -->
               <div class="pay-fields" id="upiFields">
                 <div class="form-group full">
                   <label class="form-label" for="upiId">UPI ID *</label>
@@ -1455,18 +1401,16 @@ if ($isLoggedIn) {
           </div>
 
           </div>
-          <!-- END STEP 2 -->
 
         </form>
 
-        <?php } // end of the login-check / success / form if-else ?>
+        <?php }?>
 
       </div>
 
     </div>
   </main>
 
-  <!-- Modal Confirmation Overlay -->
   <div class="modal-overlay" id="bookingModal">
     <div class="modal-content">
 
@@ -1506,64 +1450,14 @@ if ($isLoggedIn) {
     </div>
   </div>
 
-  <!-- Footer -->
-  <footer class="dk-footer" id="site-footer">
-    <div class="container">
-      <div class="dk-footer-main">
+<?php include 'backend/footer.php'; ?>
 
-        <div class="dk-footer-brand">
-          <a href="index.php" class="brand-logo" aria-label="Deepkala Hair Salon"> <img src="assets/deepkala-emblem.png" width="34" height="34" alt="Deepkala Hair Salon" style="border-radius:6px;object-fit:cover;"> <div> <div class="logo-text-title">DEEPKALA</div> <div class="logo-text-sub">HAIR SALON</div> </div> </a>
-          <p class="dk-footer-desc">Master craftsmanship, precision haircuts, and dedicated personal grooming in Ghodasar, Ahmedabad.</p>
-          <div class="dk-footer-social">
-            <a href="https://wa.me/919924620958?text=Hi%20Deepkala%20Hair%20Salon" target="_blank" rel="noopener noreferrer" aria-label="Chat on WhatsApp" title="WhatsApp"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg></a>
-            <a href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" title="Instagram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></a>
-            <a href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer" aria-label="Facebook" title="Facebook"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
-          </div>
-        </div>
-
-        <nav class="dk-footer-col" aria-label="Quick Links">
-          <h3 class="dk-footer-title">Quick Links</h3>
-          <ul class="dk-footer-list">
-            <li><a href="index.php">Home</a></li>
-            <li><a href="services.php">Services</a></li>
-            <li><a href="reviews.php">Client Reviews</a></li>
-            <li><a href="about.php">About</a></li>
-          </ul>
-        </nav>
-
-        <nav class="dk-footer-col" aria-label="Book and Visit">
-          <h3 class="dk-footer-title">Book &amp; Visit</h3>
-          <ul class="dk-footer-list">
-            <li><a href="booking.php">Reserve Slot</a></li>
-            <li><a href="membership.php">Membership</a></li>
-            <li><a href="contact.php">Contact</a></li>
-          </ul>
-        </nav>
-
-        <div class="dk-footer-col dk-footer-contact">
-          <h3 class="dk-footer-title">Salon Info</h3>
-          <ul class="dk-footer-info">
-            <li><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12 19.5s-6.5-5.4-6.5-10.5a6.5 6.5 0 0113 0c0 5.1-6.5 10.5-6.5 10.5zM12 6.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5z"/><ellipse cx="12" cy="21.6" rx="5" ry="1.1" opacity=".55"/></svg><div><small>Salon Address</small><a href="https://www.google.com/maps/search/?api=1&query=2+Jayvimal+Society+Cadila+Road+Ghodasar+Ahmedabad+380050" target="_blank" rel="noopener noreferrer" title="Open in Google Maps">2 Jayvimal Society, Cadila Road, Ghodasar, Ahmedabad – 380050</a></div></li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg><div><small>Phone No</small><a href="tel:+919924620958">+91 99246 20958</a></div></li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><div><small>Timings</small>9:00 AM – 9:00 PM, Daily</div></li>
-          </ul>
-        </div>
-
-      </div>
-
-      <hr class="dk-footer-hr">
-      <p class="dk-footer-copy">© 2026 Deepkala Hair Salon. All rights reserved.</p>
-    </div>
-  </footer>
-
-  <!-- Floating WhatsApp -->
   <a href="https://wa.me/919924620958?text=Hi%20Deepkala%20Hair%20Salon%2C%20I%27d%20like%20to%20know%20more" class="whatsapp-float" target="_blank" rel="noopener noreferrer" title="Chat on WhatsApp">
     <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
   </a>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // Intersection Observer
       const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
           if (entry.isIntersecting) entry.target.classList.add('active');
@@ -1572,12 +1466,11 @@ if ($isLoggedIn) {
 
       document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-      // Mobile Menu Toggle & Accessibility
       const menuBtn = document.getElementById('mobileMenuBtn');
       const navLinks = document.getElementById('navLinks');
       if (menuBtn && navLinks) {
         menuBtn.setAttribute('aria-expanded', 'false');
-        
+
         const toggleMenu = (show) => {
           const isOpen = show !== undefined ? show : !navLinks.classList.contains('show');
           navLinks.classList.toggle('show', isOpen);
@@ -1606,7 +1499,6 @@ if ($isLoggedIn) {
         });
       }
 
-      // Sticky Header Shadow
       const header = document.getElementById('siteHeader');
       if (header) {
         window.addEventListener('scroll', () => {
@@ -1618,15 +1510,23 @@ if ($isLoggedIn) {
         }, { passive: true });
       }
 
-      // Default Date to Today
-      const dateInput = document.getElementById('bDate');
-      if (dateInput) {
-        const today = new Date().toISOString().split('T')[0];
-        dateInput.value = today;
-        dateInput.min = today;
-      }
+      (function () {
+        const d = document.getElementById('bDate'), t = document.getElementById('bTime'),
+              all = [...t.options].map(o => o.value), ymd = x => x.toLocaleDateString('en-CA');
+        function sync() {
+          const n = new Date(), today = ymd(n), mins = n.getHours() * 60 + n.getMinutes(),
+                upcoming = all.filter(v => (parseInt(v) % 12 + (v.endsWith('PM') ? 12 : 0)) * 60 > mins);
+          d.min = upcoming.length ? today : ymd(new Date(n.getTime() + 864e5));
+          if (d.value < d.min) d.value = d.min;
+          const keep = d.value === today ? upcoming : all, cur = t.value;
+          t.innerHTML = keep.map(v => '<option>' + v + '</option>').join('');
+          if (keep.includes(cur)) t.value = cur;
+          if (t.value !== cur) t.dispatchEvent(new Event('change'));
+        }
+        d.addEventListener('change', sync);
+        sync();
+      })();
 
-      // Parse URL Parameter for pre-selected service
       const urlParams = new URLSearchParams(window.location.search);
       const preSelectedService = urlParams.get('service');
       if (preSelectedService) {
@@ -1641,14 +1541,12 @@ if ($isLoggedIn) {
         }
       }
 
-      // Update payable amount whenever service changes
       const serviceSelectEl = document.getElementById('bService');
       if (serviceSelectEl) {
         serviceSelectEl.addEventListener('change', updatePayableAmount);
         updatePayableAmount();
       }
 
-      // Auto-format card number (adds spaces every 4 digits)
       const cardNumberEl = document.getElementById('cardNumber');
       if (cardNumberEl) {
         cardNumberEl.addEventListener('input', () => {
@@ -1657,7 +1555,6 @@ if ($isLoggedIn) {
         });
       }
 
-      // Auto-format expiry (MM/YY)
       const cardExpiryEl = document.getElementById('cardExpiry');
       if (cardExpiryEl) {
         cardExpiryEl.addEventListener('input', () => {
@@ -1670,7 +1567,6 @@ if ($isLoggedIn) {
         });
       }
 
-      // CVV: digits only
       const cardCvvEl = document.getElementById('cardCvv');
       if (cardCvvEl) {
         cardCvvEl.addEventListener('input', () => {
@@ -1690,7 +1586,6 @@ if ($isLoggedIn) {
       return parseInt(match[1].replace(/,/g, ''), 10) || 0;
     }
 
-    // Membership discount % — comes from the PHP session (set at login), not localStorage
     var membershipDiscount = userMembership === 'gold' ? 20 : (userMembership === 'silver' ? 10 : 0);
 
     function updatePayableAmount() {
@@ -1729,8 +1624,6 @@ if ($isLoggedIn) {
     function goToPayment() {
       const form = document.getElementById('bookingForm');
 
-      // Only Step 1 fields carry the "required" attribute, so this validates
-      // name, phone, service, date & time without touching payment fields.
       if (!form.checkValidity()) {
         form.reportValidity();
         return;
@@ -1766,7 +1659,6 @@ if ($isLoggedIn) {
       document.getElementById('payTabUpi').classList.toggle('selected', method === 'upi');
       document.getElementById('cardFields').classList.toggle('active', method === 'card');
       document.getElementById('upiFields').classList.toggle('active', method === 'upi');
-      // Clear errors when switching
       document.querySelectorAll('.field-error').forEach(el => el.classList.remove('show'));
       document.querySelectorAll('.form-input.invalid').forEach(el => el.classList.remove('invalid'));
     }
@@ -1838,7 +1730,6 @@ if ($isLoggedIn) {
       }
     }
 
-    // Live stylist availability: short note right under the stylist dropdown
     (function () {
       const d = document.getElementById('bDate'), t = document.getElementById('bTime'),
             s = document.getElementById('bStylist'), m = document.getElementById('stylistMsg');
@@ -1860,7 +1751,6 @@ if ($isLoggedIn) {
     })();
 
     function handleBookingSubmit(e) {
-      // Validate core booking fields via native HTML5 validity
       const form = document.getElementById('bookingForm');
       if (!form.checkValidity()) {
         e.preventDefault();
@@ -1874,7 +1764,6 @@ if ($isLoggedIn) {
         return;
       }
 
-      // Validate payment fields
       if (walletCover < currentServicePrice && !validatePayment()) {
         e.preventDefault();
         return;
@@ -1886,18 +1775,10 @@ if ($isLoggedIn) {
         return;
       }
 
-      // Fill the two hidden fields the PHP script needs, then let the form
-      // submit normally (real page reload — no fetch/AJAX involved).
       document.getElementById('hiddenAmount').value = currentBasePrice;
       document.getElementById('hiddenPaymentMethod').value = (walletCover >= currentServicePrice) ? 'Wallet' : maskPaymentMethod();
-      // (no e.preventDefault() here — form submits normally to booking.php)
     }
 
-    // ===== Receipt printer modal =====
-    // The PHP block at the very top of this file already saved the booking
-    // (if it succeeded) and filled in the #rName / #rService / etc. spans
-    // above. This just plays the same little "printing" animation as before,
-    // triggered on page load instead of after a fetch() response.
     var bookingJustSucceeded = <?php echo $bookingSuccess ? 'true' : 'false'; ?>;
 
     function playReceiptAnimation() {
@@ -1938,18 +1819,18 @@ if ($isLoggedIn) {
       const txn = document.getElementById('rTxn').textContent;
 
       const { jsPDF } = window.jspdf;
-      const pageW = 226;  // narrow receipt-style width (~80mm)
+      const pageW = 226;
       const pageH = 392;
       const margin = 22;
       const contentW = pageW - margin * 2;
       const doc = new jsPDF({ unit: 'pt', format: [pageW, pageH] });
 
       const ink = '#15130E';
-      const muted = '#7A7160';
+      const muted = '#8F8676';
       const bronze = '#A9884C';
       const deep = '#0A0806';
       const dash = '#B9AF9B';
-      const bg = '#F3EEE2';
+      const bg = '#FFFFFF';
       const card = '#EAE2D0';
       const cx = pageW / 2;
 
@@ -2062,7 +1943,6 @@ if ($isLoggedIn) {
 
     function closeModal() {
       document.getElementById('bookingModal').style.display = 'none';
-      // Reset the form so the customer can make a fresh booking
       window.location.href = 'booking.php';
     }
 

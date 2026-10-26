@@ -1,20 +1,29 @@
 <?php
 require 'backend/config.php';
+require 'backend/wallet.php';
 
 $isLoggedIn = isset($_SESSION['user_id']);
 
-// Handle "Pay & Activate Membership" — real form submit, no fetch/AJAX
 $planJustActivated = false;
+$refund = 0;
 $membershipMessage = "";
 
 if ($isLoggedIn && $_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['choose_plan'])) {
-    $plan = mysqli_real_escape_string($conn, $_POST['choose_plan']); // 'silver' or 'gold'
+    $plan = mysqli_real_escape_string($conn, $_POST['choose_plan']);
 
     if ($plan == 'silver' || $plan == 'gold') {
-        $sql = "UPDATE users SET membership = '$plan' WHERE id = '{$_SESSION['user_id']}'";
-        mysqli_query($conn, $sql);
+        $uid = (int) $_SESSION['user_id'];
+        mysqli_begin_transaction($conn);
+        if ($plan == 'silver') {
+            mysqli_query($conn, "UPDATE users SET membership = 'silver' WHERE id = $uid AND membership = 'gold'");
+            if (mysqli_affected_rows($conn) > 0) {
+                $refund = 999 - 499;
+                wallet_credit($conn, $uid, $refund, null, 'Refund: switched from Gold to Silver membership');
+            }
+        }
+        mysqli_query($conn, "UPDATE users SET membership = '$plan' WHERE id = $uid");
+        mysqli_commit($conn);
 
-        // Keep the session in sync with the database
         $_SESSION['membership'] = $plan;
         $planJustActivated = true;
     }
@@ -29,16 +38,14 @@ $currentPlan = $_SESSION['membership'] ?? 'none';
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Membership — Deepkala Hair Salon, Ahmedabad</title>
 
-  <!-- Favicon SVG Monogram -->
   <link rel="icon" type="image/png" href="assets/deepkala-emblem.png">
 
-  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <!-- FONT-FAMILY UPDATED: Fraunces + Karla → Playfair Display + Inter -->
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@300..800&family=Playfair+Display:wght@400..900&display=swap" onload="this.onload=null;this.rel='stylesheet'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300..800&family=Playfair+Display:wght@400..900&display=swap"></noscript>
 
+  <link rel="stylesheet" href="assets/theme.css?v=<?= filemtime(__DIR__ . '/assets/theme.css') ?>">
   <style>
     * {
       box-sizing: border-box;
@@ -46,23 +53,9 @@ $currentPlan = $_SESSION['membership'] ?? 'none';
       padding: 0;
     }
 
-    :root {
-      --bg-cream: #15130E;
-      --text-ink: #F3EEE2;
-      --rose-accent: #C9A66B;
-      --rose-accent-hover: #B8935A;
-      --rose-deep: #0A0806;
-      --bronze-taupe: #A9884C;
-      --card-white: #1E1A14;
-      --card-cream: #221E17;
-      --border-hairline: #7A6C55;
-      --whatsapp-green: #25D366;
-      --gold-glow: #FFD666;
-    }
-
     html {
       scroll-behavior: smooth;
-      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; /* ← FONT-FAMILY UPDATED */
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
       background-color: var(--bg-cream);
       color: var(--text-ink);
       line-height: 1.6;
@@ -71,31 +64,46 @@ $currentPlan = $_SESSION['membership'] ?? 'none';
     }
 
     body { min-height: 100vh; display: flex; flex-direction: column; width: 100%; overflow-x: hidden; }
+
     img, svg { max-width: 100%; height: auto; }
+
     a { color: inherit; text-decoration: none; }
 
     .container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 24px; }
-    @media (max-width: 768px) { .container { padding: 0 16px; } }
+@media (max-width: 768px) {
+ .container { padding: 0 16px; }
+}
 
-    .font-serif { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; /* ← FONT-FAMILY UPDATED */ }
-    h1.font-serif { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; /* ← FONT-FAMILY UPDATED */ font-variation-settings: "opsz" 144, "SOFT" 0, "WONK" 0; }
+    .font-serif { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; }
 
-    /* Header (shared) */
+    h1.font-serif { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-variation-settings: "opsz" 144, "SOFT" 0, "WONK" 0; }
+
     .site-header { position: sticky; top: 0; z-index: 100; background-color: rgba(21, 19, 14, 0.95); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border-hairline); transition: padding 0.3s ease, box-shadow 0.3s ease; }
+
     .header-inner { display: flex; align-items: center; justify-content: space-between; height: 76px; }
+
     .brand-logo { display: flex; align-items: center; gap: 12px; }
-    .logo-text-title { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; /* ← FONT-FAMILY UPDATED */ font-variation-settings: "opsz" 144, "SOFT" 0, "WONK" 0; font-size: 1.25rem; font-weight: 700; letter-spacing: 0.06em; color: var(--text-ink); line-height: 1.1; }
-    .logo-text-sub { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; /* ← FONT-FAMILY UPDATED */ font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: var(--bronze-taupe); }
+
+    .logo-text-title { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-variation-settings: "opsz" 144, "SOFT" 0, "WONK" 0; font-size: 1.25rem; font-weight: 700; letter-spacing: 0.06em; color: var(--text-ink); line-height: 1.1; }
+
+    .logo-text-sub { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: var(--bronze-taupe); }
+
     .nav-links { display: flex; align-items: center; gap: 28px; list-style: none; }
+
     .nav-link { font-size: 0.825rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-ink); padding: 6px 0; position: relative; transition: color 0.2s ease; }
+
     .nav-link:hover, .nav-link.active { color: var(--rose-accent); }
+
     .nav-link.active::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 2px; background-color: var(--rose-accent); }
-    .header-book-btn { display: inline-flex; align-items: center; justify-content: center; padding: 9px 20px; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; background-color: var(--rose-accent); color: #15130E; border: 1px solid var(--rose-accent); border-radius: 4px; transition: all 0.2s ease; white-space: nowrap; }
-    .header-book-btn:hover { background-color: var(--rose-accent-hover); border-color: var(--rose-accent-hover); color: #15130E; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(10, 8, 6, 0.35); }
+
+    .header-book-btn { display: inline-flex; align-items: center; justify-content: center; padding: 9px 20px; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; background-color: var(--rose-accent); color: var(--on-primary); border: 1px solid var(--rose-accent); border-radius: 4px; transition: all 0.2s ease; white-space: nowrap; }
+
+    .header-book-btn:hover { background-color: var(--rose-accent-hover); border-color: var(--rose-accent-hover); color: var(--on-primary); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(10, 8, 6, 0.35); }
+
     .mobile-toggle { display: none; background: none; border: none; cursor: pointer; padding: 8px; color: var(--text-ink); }
 
-    /* Page Hero */
     .page-hero { position: relative; padding: 60px 0 40px 0; text-align: center; border-bottom: 1px solid var(--border-hairline); background-color: var(--bg-cream); overflow: hidden; isolation: isolate; }
+
     .page-hero::before {
       content: "";
       position: absolute;
@@ -104,24 +112,28 @@ $currentPlan = $_SESSION['membership'] ?? 'none';
       background-image:
         radial-gradient(circle at 25% 20%, rgba(201,166,107,0.12), transparent 55%),
         radial-gradient(circle at 80% 85%, rgba(201,166,107,0.07), transparent 50%),
-        repeating-linear-gradient(135deg, rgba(243,238,226,0.04) 0px, rgba(243,238,226,0.04) 1px, transparent 1px, transparent 9px),
+        repeating-linear-gradient(135deg, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px, transparent 1px, transparent 9px),
         repeating-linear-gradient(45deg, rgba(0,0,0,0.22) 0px, rgba(0,0,0,0.22) 1px, transparent 1px, transparent 9px),
         url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
       background-size: auto, auto, auto, auto, 180px 180px;
       background-repeat: no-repeat, no-repeat, repeat, repeat, repeat;
       z-index: -2;
     }
+
     .page-hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(160deg, rgba(10,8,6,0.82) 0%, rgba(201,166,107,0.38) 55%, rgba(10,8,6,0.88) 100%); z-index: -1; }
+
     .page-hero > .container { position: relative; z-index: 1; }
+
     .page-hero h1 { font-size: clamp(2.2rem, 4vw, 3.2rem); font-weight: 700; color: var(--text-ink); margin-bottom: 12px; }
-    .page-hero p { font-size: 1rem; color: #B3AA98; max-width: 620px; margin: 0 auto; }
 
+    .page-hero p { font-size: 1rem; color: var(--text-2); max-width: 620px; margin: 0 auto; }
 
-    .eyebrow-tag { display: inline-block; background-color: var(--text-ink); color: var(--bg-cream); padding: 6px 14px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; }
+    .eyebrow-tag { display: inline-block; background-color: var(--brand); color: var(--on-brand); padding: 6px 14px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; }
+
     .category-header { display: flex; align-items: center; gap: 16px; margin-top: 48px; margin-bottom: 16px; }
+
     .category-header .hairline { flex: 1; height: 1px; background-color: var(--border-hairline); }
 
-    /* Already-member banner */
     .member-status-bar {
       display: none;
       background-color: var(--card-cream);
@@ -133,18 +145,22 @@ $currentPlan = $_SESSION['membership'] ?? 'none';
       gap: 14px;
       flex-wrap: wrap;
     }
+
     .member-status-bar.show { display: flex; }
-    .member-status-text { font-size: 0.9rem; color: #E4DCC8; }
+
+    .member-status-text { font-size: 0.9rem; color: #FFFFFF; }
+
     .member-status-text strong { color: var(--rose-accent); }
 
-    /* Plans grid */
     .plans-grid {
       display: grid;
       grid-template-columns: 1fr;
       gap: 24px;
       margin-bottom: 60px;
     }
-    @media (min-width: 768px) { .plans-grid { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 768px) {
+ .plans-grid { grid-template-columns: 1fr 1fr; }
+}
 
     .plan-card {
       background-color: var(--card-white);
@@ -155,7 +171,9 @@ $currentPlan = $_SESSION['membership'] ?? 'none';
       position: relative;
       transition: transform 0.2s ease, border-color 0.2s ease;
     }
+
     .plan-card:hover { transform: translateY(-3px); }
+
     .plan-card.gold { border-color: var(--gold-glow); box-shadow: 0 10px 30px rgba(255, 214, 102, 0.08); }
 
     .plan-badge-corner {
@@ -169,28 +187,39 @@ $currentPlan = $_SESSION['membership'] ?? 'none';
       padding: 6px 14px;
     }
 
-    .plan-name { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; /* ← FONT-FAMILY UPDATED */ font-size: 1.6rem; font-weight: 700; margin-bottom: 6px; }
+    .plan-name { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: 1.6rem; font-weight: 700; margin-bottom: 6px; }
+
     .plan-card.silver .plan-name { color: var(--rose-accent); }
+
     .plan-card.gold .plan-name { color: var(--gold-glow); }
 
-    .plan-desc { font-size: 0.85rem; color: #9C9284; margin-bottom: 22px; }
+    .plan-desc { font-size: 0.85rem; color: var(--text-3); margin-bottom: 22px; }
 
-    .plan-price { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; /* ← FONT-FAMILY UPDATED */ font-size: 2.4rem; font-weight: 700; color: var(--text-ink); }
-    .plan-price span { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; /* ← FONT-FAMILY UPDATED */ font-size: 0.9rem; font-weight: 500; color: #9C9284; }
+    .plan-price { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: 2.4rem; font-weight: 700; color: var(--text-ink); }
+
+    .plan-price span { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 0.9rem; font-weight: 500; color: var(--text-3); }
+
     .plan-discount-tag {
       display: inline-block;
       margin-top: 10px; margin-bottom: 22px;
       font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
       padding: 5px 12px; border-radius: 4px;
     }
+
     .plan-card.silver .plan-discount-tag { background-color: rgba(201,166,107,0.15); color: var(--rose-accent); border: 1px solid rgba(201,166,107,0.4); }
+
     .plan-card.gold .plan-discount-tag { background-color: rgba(255,214,102,0.15); color: var(--gold-glow); border: 1px solid rgba(255,214,102,0.45); }
 
     .plan-features { list-style: none; margin-bottom: 28px; flex: 1; }
+
     .plan-features li { display: flex; align-items: flex-start; gap: 10px; font-size: 0.85rem; color: #C9C2B4; padding: 8px 0; border-bottom: 1px solid #2A2419; }
+
     .plan-features li:last-child { border-bottom: none; }
+
     .plan-features li svg { flex-shrink: 0; margin-top: 3px; }
+
     .plan-card.silver .plan-features li svg { color: var(--rose-accent); }
+
     .plan-card.gold .plan-features li svg { color: var(--gold-glow); }
 
     .btn-choose-plan {
@@ -198,95 +227,126 @@ $currentPlan = $_SESSION['membership'] ?? 'none';
       padding: 15px 24px; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em;
       cursor: pointer; border-radius: 4px; transition: all 0.2s ease; width: 100%; min-height: 46px;
     }
-    .plan-card.silver .btn-choose-plan { background-color: var(--rose-accent); color: #FFF; border: 1px solid var(--rose-accent); }
-    .plan-card.silver .btn-choose-plan:hover { background-color: var(--rose-deep); border-color: var(--rose-deep); }
-    .plan-card.gold .btn-choose-plan { background-color: var(--gold-glow); color: var(--rose-deep); border: 1px solid var(--gold-glow); }
-    .plan-card.gold .btn-choose-plan:hover { background-color: #FFE28C; }
-    .btn-choose-plan.current { background-color: var(--card-cream) !important; color: #9C9284 !important; border: 1px solid var(--border-hairline) !important; cursor: default; }
 
-    /* Payment modal (re-used pattern from booking, simplified) */
+    .plan-card.silver .btn-choose-plan { background-color: var(--rose-accent); color: #FFF; border: 1px solid var(--rose-accent); }
+
+    .plan-card.silver .btn-choose-plan:hover { background-color: var(--rose-deep); border-color: var(--rose-deep); }
+
+    .plan-card.gold .btn-choose-plan { background-color: var(--gold-glow); color: var(--rose-deep); border: 1px solid var(--gold-glow); }
+
+    .plan-card.gold .btn-choose-plan:hover { background-color: #FFE28C; }
+
+    .btn-choose-plan.current { background-color: var(--card-cream) !important; color: var(--text-3) !important; border: 1px solid var(--border-hairline) !important; cursor: default; }
+
     .modal-overlay { display: none; position: fixed; inset: 0; background-color: rgba(0,0,0,0.75); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center; padding: 24px; }
+
     .modal-content { background-color: var(--bg-cream); border: 1px solid var(--border-hairline); border-radius: 8px; padding: 36px; max-width: 460px; width: 100%; text-align: left; box-shadow: 0 20px 48px rgba(0,0,0,0.5); }
-    .modal-title { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; /* ← FONT-FAMILY UPDATED */ font-size: 1.4rem; font-weight: 700; color: var(--text-ink); margin-bottom: 6px; text-align: center; }
-    .modal-sub { font-size: 0.82rem; color: #B3AA98; text-align: center; margin-bottom: 22px; }
+
+    .modal-title { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: 1.4rem; font-weight: 700; color: var(--text-ink); margin-bottom: 6px; text-align: center; }
+
+    .modal-sub { font-size: 0.82rem; color: var(--text-2); text-align: center; margin-bottom: 22px; }
 
     .payment-amount-bar { display: flex; align-items: center; justify-content: space-between; background-color: var(--card-cream); border: 1px solid var(--border-hairline); padding: 14px 18px; margin-bottom: 20px; flex-wrap: wrap; gap: 8px; }
-    .payment-amount-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: #B3AA98; }
-    .payment-amount-value { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; /* ← FONT-FAMILY UPDATED */ font-size: 1.35rem; font-weight: 700; color: var(--rose-accent); }
+
+    .payment-amount-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-2); }
+
+    .payment-amount-value { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: 1.35rem; font-weight: 700; color: var(--rose-accent); }
 
     .pay-method-toggle { display: flex; gap: 10px; margin-bottom: 20px; }
+
     .pay-method-pill { flex: 1; text-align: center; padding: 12px 10px; border: 1px solid var(--border-hairline); background-color: var(--card-white); font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.15s ease; user-select: none; }
+
     .pay-method-pill.selected { background-color: var(--rose-deep); border-color: var(--rose-deep); color: #FFF; }
 
     .pay-fields { display: none; flex-direction: column; gap: 14px; }
+
     .pay-fields.active { display: flex; }
 
     .form-group { display: flex; flex-direction: column; gap: 6px; }
+
     .form-label { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-ink); }
-    .form-input { padding: 11px 14px; border: 1px solid var(--border-hairline); background-color: var(--card-white); font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; /* ← FONT-FAMILY UPDATED */ font-size: 15px; color: var(--text-ink); width: 100%; min-height: 42px; border-radius: 4px; }
+
+    .form-input { padding: 11px 14px; border: 1px solid var(--border-hairline); background-color: var(--card-white); font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 15px; color: var(--text-ink); width: 100%; min-height: 42px; border-radius: 4px; }
+
     .form-input:focus { outline: 2px solid var(--rose-accent); border-color: var(--rose-accent); }
+
     .field-error { font-size: 0.72rem; color: #FF6B60; display: none; }
+
     .field-error.show { display: block; }
+
     .form-input.invalid { border-color: #FF6B60; }
+
     .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 
+    .btn-submit { display: inline-flex; align-items: center; justify-content: center; gap: 10px; background-color: var(--rose-accent); color: var(--on-primary); padding: 15px 24px; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; border: 1px solid var(--rose-accent); cursor: pointer; width: 100%; border-radius: 4px; margin-top: 20px; min-height: 46px; }
 
-    .btn-submit { display: inline-flex; align-items: center; justify-content: center; gap: 10px; background-color: var(--rose-accent); color: #15130E; padding: 15px 24px; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; border: 1px solid var(--rose-accent); cursor: pointer; width: 100%; border-radius: 4px; margin-top: 20px; min-height: 46px; }
     .btn-submit:hover { background-color: var(--rose-accent-hover); border-color: var(--rose-accent-hover); }
 
     .btn-link-muted { background: none; border: none; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--bronze-taupe); cursor: pointer; padding: 8px; width: 100%; margin-top: 6px; }
 
     .processing-box { padding: 10px 0; text-align: center; }
+
     .spinner { width: 40px; height: 40px; border: 3px solid var(--border-hairline); border-top-color: var(--rose-deep); border-radius: 50%; margin: 0 auto 16px auto; animation: spin 0.8s linear infinite; }
+
     @keyframes spin { to { transform: rotate(360deg); } }
 
     .success-box { text-align: center; }
+
     .success-check { width: 56px; height: 56px; border-radius: 50%; background-color: rgba(37,211,102,0.15); border: 1px solid rgba(37,211,102,0.4); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto; }
+
     .success-summary { background-color: var(--card-cream); border: 1px solid var(--border-hairline); padding: 14px 18px; margin: 18px 0; font-size: 0.85rem; color: #C9C2B4; text-align: left; border-radius: 4px; }
+
     .success-summary strong { color: var(--text-ink); }
 
-    /* keep footer at page bottom on short pages */
     main { flex: 1 0 auto; }
-    .whatsapp-float { position: fixed; bottom: max(20px, env(safe-area-inset-bottom, 20px)); right: max(20px, env(safe-area-inset-right, 20px)); width: 52px; height: 52px; background-color: var(--whatsapp-green); color: #15130E; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(37,211,102,0.35); z-index: 999; transition: transform 0.2s ease; }
+
+    .whatsapp-float { position: fixed; bottom: max(20px, env(safe-area-inset-bottom, 20px)); right: max(20px, env(safe-area-inset-right, 20px)); width: 52px; height: 52px; background-color: var(--whatsapp-green); color: var(--on-whatsapp); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(37,211,102,0.35); z-index: 999; transition: transform 0.2s ease; }
+
     .whatsapp-float:hover { transform: scale(1.08) translateY(-2px); }
 
     .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.6s cubic-bezier(0.16,1,0.3,1), transform 0.6s cubic-bezier(0.16,1,0.3,1); }
+
     .reveal.active { opacity: 1; transform: translateY(0); }
 
     .mobile-menu-cta { display: none; }
-
-    @media (max-width: 860px) {
+@media (max-width: 860px) {
       .nav-links { display: none; position: absolute; top: 100%; left: 0; right: 0; background-color: var(--bg-cream); border-bottom: 2px solid var(--rose-accent); flex-direction: column; padding: 16px 20px 24px 20px; gap: 8px; box-shadow: 0 12px 28px rgba(0,0,0,0.45); z-index: 999; max-height: calc(100vh - 80px); overflow-y: auto; }
+
       .nav-links.show { display: flex; }
+
       .nav-link { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; font-size: 0.9rem; width: 100%; border-bottom: 1px solid var(--border-hairline); border-radius: 4px; }
+
       .nav-link:hover, .nav-link.active { background-color: var(--card-cream); }
+
       .mobile-toggle { display: flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; border: 1px solid var(--border-hairline); border-radius: 4px; }
+
       .mobile-menu-cta { display: block; margin-top: 8px; }
+
       .field-row { grid-template-columns: 1fr; }
-    }
+}
 
     .dk-member-badge { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; padding: 3px 9px; border-radius: 4px; white-space: nowrap; }
+
     .dk-badge-silver { background-color: rgba(201,166,107,0.15); color: #C9A66B; border: 1px solid rgba(201,166,107,0.4); }
-    .dk-badge-gold { background-color: rgba(255,214,102,0.15); color: #FFD666; border: 1px solid rgba(255,214,102,0.45); }
+
+    .dk-badge-gold { background-color: rgba(255,214,102,0.15); color: var(--highlight); border: 1px solid rgba(255,214,102,0.45); }
+
     .nav-member-badge { margin-left: 8px; font-size: 0.55rem !important; padding: 2px 7px !important; vertical-align: middle; }
-    @media (max-width: 860px) { .dk-auth-slot { display: none; } }
-  </style>
+</style>
   <style>
-    /* Smooth native page transition (no JS, no opacity hacks -> no flicker) */
     @view-transition {
       navigation: auto;
     }
-  </style>
+</style>
   <style>
-    /* Accessibility: skip link */
     .skip-link {
       position: absolute;
       top: -48px;
       left: 8px;
       z-index: 3000;
       background-color: var(--rose-accent, #C9A66B);
-      color: #15130E;
-      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; /* ← FONT-FAMILY UPDATED */
+      color: var(--on-primary);
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
       font-weight: 700;
       font-size: 0.85rem;
       padding: 10px 18px;
@@ -294,12 +354,11 @@ $currentPlan = $_SESSION['membership'] ?? 'none';
       text-decoration: none;
       transition: top 0.2s ease;
     }
+
     .skip-link:focus {
       top: 8px;
     }
 
-
-    /* Accessibility: consistent visible focus styles across interactive elements */
     a:focus-visible,
     button:focus-visible,
     input:focus-visible,
@@ -311,32 +370,28 @@ $currentPlan = $_SESSION['membership'] ?? 'none';
       outline-offset: 2px;
       border-radius: 4px;
     }
-
-    @media (prefers-reduced-motion: reduce) {
+@media (prefers-reduced-motion: reduce) {
       .reveal {
         opacity: 1;
         transform: none;
         transition: none;
       }
-    }
-
-  </style>
+}
+</style>
   <noscript>
     <style>
-      /* Accessibility: if JS fails to load, scroll-reveal content must still be visible */
       .reveal {
         opacity: 1 !important;
         transform: none !important;
         transition: none !important;
       }
-    </style>
+</style>
   </noscript>
   <link rel="stylesheet" href="assets/responsive.css?v=<?= filemtime(__DIR__ . '/assets/responsive.css') ?>">
 </head>
 <body>
   <a href="#main-content" class="skip-link">Skip to content</a>
 
-  <!-- Header -->
   <header class="site-header" id="siteHeader">
     <div class="container header-inner">
       <a href="index.php" class="brand-logo" aria-label="Deepkala Hair Salon Homepage">
@@ -371,7 +426,6 @@ $currentPlan = $_SESSION['membership'] ?? 'none';
     </div>
   </header>
   <main id="main-content" tabindex="-1">
-    <!-- Page Hero -->
     <section class="page-hero">
       <div class="container reveal">
 <h1 class="font-serif">Deepkala Membership</h1>
@@ -385,7 +439,6 @@ $currentPlan = $_SESSION['membership'] ?? 'none';
         <div class="hairline"></div>
       </div>
 
-      <!-- Already a member banner -->
       <?php if ($currentPlan !== 'none') { ?>
         <div class="member-status-bar reveal show" id="memberStatusBar">
           <div class="member-status-text" id="memberStatusText">You're already a <strong><?php echo $currentPlan === 'gold' ? 'Gold Member' : 'Silver Member'; ?></strong> — enjoying <?php echo $currentPlan === 'gold' ? 20 : 10; ?>% off every service.</div>
@@ -394,7 +447,6 @@ $currentPlan = $_SESSION['membership'] ?? 'none';
 
       <div class="plans-grid">
 
-        <!-- Silver Plan -->
         <div class="plan-card silver reveal">
           <div class="plan-name">Silver</div>
           <div class="plan-desc">A simple way to save on every regular visit.</div>
@@ -412,7 +464,6 @@ $currentPlan = $_SESSION['membership'] ?? 'none';
           <?php } ?>
         </div>
 
-        <!-- Gold Plan -->
         <div class="plan-card gold reveal">
           <div class="plan-badge-corner">Most Popular</div>
           <div class="plan-name">Gold</div>
@@ -437,11 +488,9 @@ $currentPlan = $_SESSION['membership'] ?? 'none';
     </div>
   </main>
 
-  <!-- Checkout Modal -->
   <div class="modal-overlay" id="checkoutModal">
     <div class="modal-content">
 
-      <!-- Payment Form State -->
       <form id="membershipForm" method="POST" action="membership.php">
       <input type="hidden" name="choose_plan" id="hiddenChoosePlan" value="">
       <div id="modalPaymentForm">
@@ -497,7 +546,6 @@ $currentPlan = $_SESSION['membership'] ?? 'none';
       </div>
       </form>
 
-      <!-- Processing State -->
       <div id="modalProcessing" style="display:none;">
         <div class="processing-box">
           <div class="spinner"></div>
@@ -506,7 +554,6 @@ $currentPlan = $_SESSION['membership'] ?? 'none';
         </div>
       </div>
 
-      <!-- Success State (no receipt/bill — simple confirmation only) -->
       <div id="modalSuccess" style="display:none;">
         <div class="success-box">
           <div class="success-check">
@@ -525,55 +572,7 @@ $currentPlan = $_SESSION['membership'] ?? 'none';
     </div>
   </div>
 
-  <!-- Footer -->
-  <footer class="dk-footer" id="site-footer">
-    <div class="container">
-      <div class="dk-footer-main">
-
-        <div class="dk-footer-brand">
-          <a href="index.php" class="brand-logo" aria-label="Deepkala Hair Salon"> <img src="assets/deepkala-emblem.png" width="34" height="34" alt="Deepkala Hair Salon" style="border-radius:6px;object-fit:cover;"> <div> <div class="logo-text-title">DEEPKALA</div> <div class="logo-text-sub">HAIR SALON</div> </div> </a>
-          <p class="dk-footer-desc">Master craftsmanship, precision haircuts, and dedicated personal grooming in Ghodasar, Ahmedabad.</p>
-          <div class="dk-footer-social">
-            <a href="https://wa.me/919924620958?text=Hi%20Deepkala%20Hair%20Salon" target="_blank" rel="noopener noreferrer" aria-label="Chat on WhatsApp" title="WhatsApp"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg></a>
-            <a href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" title="Instagram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></a>
-            <a href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer" aria-label="Facebook" title="Facebook"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
-          </div>
-        </div>
-
-        <nav class="dk-footer-col" aria-label="Quick Links">
-          <h3 class="dk-footer-title">Quick Links</h3>
-          <ul class="dk-footer-list">
-            <li><a href="index.php">Home</a></li>
-            <li><a href="services.php">Services</a></li>
-            <li><a href="reviews.php">Client Reviews</a></li>
-            <li><a href="about.php">About</a></li>
-          </ul>
-        </nav>
-
-        <nav class="dk-footer-col" aria-label="Book and Visit">
-          <h3 class="dk-footer-title">Book &amp; Visit</h3>
-          <ul class="dk-footer-list">
-            <li><a href="booking.php">Reserve Slot</a></li>
-            <li><a href="membership.php">Membership</a></li>
-            <li><a href="contact.php">Contact</a></li>
-          </ul>
-        </nav>
-
-        <div class="dk-footer-col dk-footer-contact">
-          <h3 class="dk-footer-title">Salon Info</h3>
-          <ul class="dk-footer-info">
-            <li><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12 19.5s-6.5-5.4-6.5-10.5a6.5 6.5 0 0113 0c0 5.1-6.5 10.5-6.5 10.5zM12 6.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5z"/><ellipse cx="12" cy="21.6" rx="5" ry="1.1" opacity=".55"/></svg><div><small>Salon Address</small><a href="https://www.google.com/maps/search/?api=1&query=2+Jayvimal+Society+Cadila+Road+Ghodasar+Ahmedabad+380050" target="_blank" rel="noopener noreferrer" title="Open in Google Maps">2 Jayvimal Society, Cadila Road, Ghodasar, Ahmedabad – 380050</a></div></li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg><div><small>Phone No</small><a href="tel:+919924620958">+91 99246 20958</a></div></li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><div><small>Timings</small>9:00 AM – 9:00 PM, Daily</div></li>
-          </ul>
-        </div>
-
-      </div>
-
-      <hr class="dk-footer-hr">
-      <p class="dk-footer-copy">© 2026 Deepkala Hair Salon. All rights reserved.</p>
-    </div>
-  </footer>
+<?php include 'backend/footer.php'; ?>
 
   <a href="https://wa.me/919924620958?text=Hi%20Deepkala%20Hair%20Salon%2C%20I%27d%20like%20to%20know%20more" class="whatsapp-float" target="_blank" rel="noopener noreferrer" title="Chat on WhatsApp">
     <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
@@ -623,7 +622,6 @@ $currentPlan = $_SESSION['membership'] ?? 'none';
         cardCvvEl.value = cardCvvEl.value.replace(/\D/g, '').slice(0, 4);
       });
 
-      // (member status bar + plan buttons are rendered directly by PHP now)
     });
 
     const PLANS = {
@@ -639,7 +637,7 @@ $currentPlan = $_SESSION['membership'] ?? 'none';
     let currentSwitchAmount = 0;
 
     function openPlanCheckout(planKey) {
-      if (userCurrentPlan === planKey) return; // already on this plan
+      if (userCurrentPlan === planKey) return;
 
       if (!userIsLoggedIn) {
         window.location.href = 'login.php?redirect=membership.php';
@@ -656,12 +654,10 @@ $currentPlan = $_SESSION['membership'] ?? 'none';
       const toggle = document.getElementById('payMethodToggle');
 
       if (userCurrentPlan !== 'none') {
-        // Already a member and switching plans — charge only the difference
         const oldPrice = PLANS[userCurrentPlan].price;
         const diff = plan.price - oldPrice;
 
         if (diff > 0) {
-          // Upgrading (Silver → Gold): pay just the difference
           currentSwitchAmount = diff;
           label.textContent = 'Upgrade Amount Payable';
           amountEl.textContent = '₹' + diff.toLocaleString('en-IN');
@@ -670,12 +666,11 @@ $currentPlan = $_SESSION['membership'] ?? 'none';
           toggle.style.display = '';
           document.getElementById('modalPaymentForm').style.display = 'block';
         } else {
-          // Downgrading (Gold → Silver): no payment, refund message instead
           currentSwitchAmount = 0;
           label.textContent = 'Amount Payable';
           amountEl.textContent = '₹0';
           note.style.display = 'block';
-          note.textContent = `You're switching down from ${userCurrentPlan} to ${plan.label}. The ₹${Math.abs(diff)} difference will be refunded to your original payment method within 5–7 business days. No extra payment needed — just confirm below.`;
+          note.textContent = `You're switching down from ${userCurrentPlan} to ${plan.label}. The ₹${Math.abs(diff)} difference will be refunded to your Deepkala wallet instantly. No extra payment needed — just confirm below.`;
           toggle.style.display = 'none';
           document.getElementById('cardFields').classList.remove('active');
           document.getElementById('upiFields').classList.remove('active');
@@ -718,9 +713,6 @@ $currentPlan = $_SESSION['membership'] ?? 'none';
       }
     }
 
-    // Card & UPI validation — same rules as the booking page:
-    // card = 16 digits, expiry must be a real MM/YY that hasn't passed, CVV 3-4 digits
-    // UPI = something like "name@bank"
     function validatePayment() {
       let valid = true;
       if (currentPayMethod === 'card') {
@@ -756,8 +748,6 @@ $currentPlan = $_SESSION['membership'] ?? 'none';
       return valid;
     }
 
-    // Card → "Card •••• 1234", UPI → "UPI (name@bank)" — this exact string
-    // is what gets saved in appointments.payment_method / this membership purchase
     function maskPaymentMethod() {
       if (currentPayMethod === 'card') {
         const number = document.getElementById('cardNumber').value.replace(/\s/g, '');
@@ -769,25 +759,20 @@ $currentPlan = $_SESSION['membership'] ?? 'none';
     }
 
     function submitMembershipPayment() {
-      // Downgrading (₹0 payable) skips card/UPI entry entirely
       if (currentSwitchAmount > 0 && !validatePayment()) return;
 
-      // Show the "processing" look while the real page reload happens
       document.getElementById('modalPaymentForm').style.display = 'none';
       document.getElementById('modalProcessing').style.display = 'block';
 
-      // Real form submit (no fetch/AJAX) — PHP saves it to the database
       document.getElementById('hiddenChoosePlan').value = currentPlanKey;
       document.getElementById('membershipForm').submit();
     }
 
-    // If PHP just activated a plan (real page reload after "Pay & Activate"),
-    // show the success state of the same modal straight away.
     var planJustActivated = <?php echo $planJustActivated ? 'true' : 'false'; ?>;
     <?php if ($planJustActivated) { ?>
     window.addEventListener('DOMContentLoaded', function () {
       document.getElementById('successTitle').textContent = <?php echo json_encode($currentPlan === 'gold' ? 'Welcome to Gold!' : 'Welcome to Silver!'); ?>;
-      document.getElementById('successSub').textContent = 'Your membership is now active.';
+      document.getElementById('successSub').textContent = <?php echo json_encode($refund ? "₹$refund has been refunded to your Deepkala wallet." : 'Your membership is now active.'); ?>;
       document.getElementById('successSummary').innerHTML =
         '<strong><?php echo $currentPlan === 'gold' ? 'Gold Membership' : 'Silver Membership'; ?></strong> activated<br><?php echo $currentPlan === 'gold' ? 20 : 10; ?>% off every service, automatically';
 

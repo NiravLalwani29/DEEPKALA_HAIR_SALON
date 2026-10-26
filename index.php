@@ -9,15 +9,13 @@ $isLoggedIn = isset($_SESSION['user_id']);
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Deepkala Hair Salon — Precision Haircuts & Grooming in Ghodasar, Ahmedabad</title>
 
-  <!-- Favicon SVG Monogram -->
   <link rel="icon" type="image/png" href="assets/deepkala-emblem.png">
 
-  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <!-- FONT-FAMILY UPDATED: Fraunces + Karla → Playfair Display + Inter -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
 
+  <link rel="stylesheet" href="assets/theme.css?v=<?= filemtime(__DIR__ . '/assets/theme.css') ?>">
   <style>
     * {
       box-sizing: border-box;
@@ -25,22 +23,9 @@ $isLoggedIn = isset($_SESSION['user_id']);
       padding: 0;
     }
 
-    :root {
-      --bg-cream: #15130E;
-      --text-ink: #F3EEE2;
-      --rose-accent: #C9A66B;
-      --rose-accent-hover: #B8935A;
-      --rose-deep: #0A0806;
-      --bronze-taupe: #A9884C;
-      --card-white: #1E1A14;
-      --card-cream: #221E17;
-      --border-hairline: #7A6C55;
-      --whatsapp-green: #25D366;
-    }
-
     html {
       scroll-behavior: smooth;
-      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; /* ← FONT-FAMILY UPDATED */
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
       background-color: var(--bg-cream);
       color: var(--text-ink);
       line-height: 1.6;
@@ -73,41 +58,37 @@ $isLoggedIn = isset($_SESSION['user_id']);
       text-decoration: none;
     }
 
-    /* Container Utility */
     .container {
       width: 100%;
       max-width: 1200px;
       margin: 0 auto;
       padding: 0 24px;
     }
-
-    @media (max-width: 768px) {
+@media (max-width: 768px) {
       .container {
         padding: 0 16px;
       }
-    }
-
-    @media (max-width: 380px) {
+}
+@media (max-width: 380px) {
       .container {
         padding: 0 12px;
       }
-    }
+}
 
-    /* Typography */
-    .font-serif { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; /* ← FONT-FAMILY UPDATED */ }
-    h1.font-serif { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; /* ← FONT-FAMILY UPDATED */ font-variation-settings: "opsz" 144, "SOFT" 0, "WONK" 0; }
+    .font-serif { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; }
 
-    /* Eyebrow Tag */
+    h1.font-serif { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-variation-settings: "opsz" 144, "SOFT" 0, "WONK" 0; }
+
     .eyebrow-tag {
       display: inline-block;
-      background-color: var(--text-ink);
-      color: var(--bg-cream);
+      background-color: var(--brand);
+      color: var(--on-brand);
       padding: 4px 12px;
       font-size: 0.72rem;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.1em;
-      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; /* ← FONT-FAMILY UPDATED */
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
     }
 
     .category-header {
@@ -123,7 +104,6 @@ $isLoggedIn = isset($_SESSION['user_id']);
       background-color: var(--border-hairline);
     }
 
-    /* Navbar */
     .site-header {
       position: sticky;
       top: 0;
@@ -148,7 +128,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
     }
 
     .logo-text-title {
-      font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; /* ← FONT-FAMILY UPDATED */
+      font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
       font-variation-settings: "opsz" 144, "SOFT" 0, "WONK" 0;
       font-size: 1.25rem;
       font-weight: 700;
@@ -158,7 +138,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
     }
 
     .logo-text-sub {
-      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; /* ← FONT-FAMILY UPDATED */
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
       font-size: 0.65rem;
       font-weight: 600;
       text-transform: uppercase;
@@ -208,7 +188,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
       letter-spacing: 0.06em;
       text-transform: uppercase;
       background-color: var(--rose-accent);
-      color: #15130E;
+      color: var(--on-primary);
       border: 1px solid var(--rose-accent);
       border-radius: 4px;
       transition: all 0.2s ease;
@@ -218,7 +198,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
     .header-book-btn:hover {
       background-color: var(--rose-accent-hover);
       border-color: var(--rose-accent-hover);
-      color: #15130E;
+      color: var(--on-primary);
       transform: translateY(-1px);
       box-shadow: 0 4px 12px rgba(10, 8, 6, 0.35);
     }
@@ -231,7 +211,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
       width: 100%;
       padding: 10px 16px;
       background-color: var(--whatsapp-green);
-      color: #15130E !important;
+      color: var(--on-whatsapp) !important;
       font-size: 0.85rem;
       font-weight: 600;
       border-radius: 4px;
@@ -240,8 +220,8 @@ $isLoggedIn = isset($_SESSION['user_id']);
     }
 
     .btn-whatsapp-cta:hover {
-      background-color: #20BA56;
-      color: #15130E !important;
+      background-color: var(--whatsapp-hover);
+      color: var(--on-whatsapp) !important;
     }
 
     .mobile-toggle {
@@ -253,14 +233,13 @@ $isLoggedIn = isset($_SESSION['user_id']);
       color: var(--text-ink);
     }
 
-    /* Buttons */
     .btn-primary {
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 10px;
       background-color: var(--rose-accent);
-      color: #15130E;
+      color: var(--on-primary);
       padding: 14px 28px;
       font-size: 0.825rem;
       font-weight: 600;
@@ -301,11 +280,6 @@ $isLoggedIn = isset($_SESSION['user_id']);
       transform: translateY(-2px);
     }
 
-
-
-
-
-    /* Hero Section */
     .hero-section {
       height: calc(100vh - 77px);
       min-height: 560px;
@@ -329,14 +303,13 @@ $isLoggedIn = isset($_SESSION['user_id']);
       justify-content: center;
       max-height: 100%;
     }
-
-    @media (max-width: 640px) {
+@media (max-width: 640px) {
       .hero-section {
         height: calc(100svh - 77px);
         max-height: calc(100svh - 77px);
         min-height: 480px;
       }
-    }
+}
 
     .hero-section::before {
       content: "";
@@ -361,7 +334,6 @@ $isLoggedIn = isset($_SESSION['user_id']);
       z-index: 1;
     }
 
-
     .hero-title {
       font-size: clamp(2rem, 4.2vw, 3.75rem);
       font-weight: 700;
@@ -373,7 +345,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
 
     .hero-tagline {
       font-size: clamp(0.95rem, 1.4vw, 1.125rem);
-      color: #E4DCC8;
+      color: #FFFFFF;
       max-width: 640px;
       margin: 0 auto 24px auto;
       font-weight: 400;
@@ -389,10 +361,6 @@ $isLoggedIn = isset($_SESSION['user_id']);
       color: var(--text-ink);
     }
 
-
-
-
-
     .hero-ctas {
       display: flex;
       align-items: center;
@@ -401,7 +369,6 @@ $isLoggedIn = isset($_SESSION['user_id']);
       flex-wrap: wrap;
     }
 
-    /* Highlights Section */
     .highlights-section {
       padding: 60px 0;
       border-bottom: 1px solid var(--border-hairline);
@@ -422,7 +389,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
     }
 
     .highlight-number {
-      font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; /* ← FONT-FAMILY UPDATED */
+      font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
       font-size: 1.75rem;
       font-weight: 700;
       color: var(--rose-accent);
@@ -430,7 +397,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
     }
 
     .highlight-title {
-      font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; /* ← FONT-FAMILY UPDATED */
+      font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
       font-size: 1.1rem;
       font-weight: 700;
       margin-bottom: 6px;
@@ -439,11 +406,10 @@ $isLoggedIn = isset($_SESSION['user_id']);
 
     .highlight-desc {
       font-size: 0.85rem;
-      color: #9C9284;
+      color: var(--text-3);
       line-height: 1.5;
     }
 
-    /* Services Preview Section */
     .services-preview-section {
       padding: 80px 0;
       border-bottom: 1px solid var(--border-hairline);
@@ -455,12 +421,11 @@ $isLoggedIn = isset($_SESSION['user_id']);
       gap: 20px;
       margin-bottom: 36px;
     }
-
-    @media (min-width: 768px) {
+@media (min-width: 768px) {
       .services-grid {
         grid-template-columns: 1fr 1fr;
       }
-    }
+}
 
     .service-card {
       background-color: var(--card-white);
@@ -514,12 +479,11 @@ $isLoggedIn = isset($_SESSION['user_id']);
     }
 
     .service-card .service-desc {
-      color: #E4DCC8 !important;
+      color: #FFFFFF !important;
     }
 
-
     .service-title {
-      font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; /* ← FONT-FAMILY UPDATED */
+      font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
       font-size: 1.25rem;
       font-weight: 700;
       color: var(--text-ink);
@@ -527,16 +491,16 @@ $isLoggedIn = isset($_SESSION['user_id']);
     }
 
     .service-desc {
-      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; /* ← FONT-FAMILY UPDATED */
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
       font-size: 0.72rem;
       font-weight: 500;
-      color: #9C9284;
+      color: var(--text-3);
       text-transform: uppercase;
       letter-spacing: 0.08em;
     }
 
     .service-price {
-      font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; /* ← FONT-FAMILY UPDATED */
+      font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
       font-size: 1.25rem;
       font-weight: 700;
       color: var(--text-ink);
@@ -547,7 +511,6 @@ $isLoggedIn = isset($_SESSION['user_id']);
       text-align: center;
     }
 
-    /* Testimonials Preview */
     .testimonials-section {
       padding: 80px 0;
       background-color: var(--card-cream);
@@ -560,12 +523,11 @@ $isLoggedIn = isset($_SESSION['user_id']);
       gap: 24px;
       margin-bottom: 36px;
     }
-
-    @media (min-width: 768px) {
+@media (min-width: 768px) {
       .reviews-grid {
         grid-template-columns: 1fr 1fr;
       }
-    }
+}
 
     .review-card {
       background-color: var(--card-white);
@@ -589,7 +551,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; /* ← FONT-FAMILY UPDATED */
+      font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
       font-weight: 700;
       color: var(--rose-accent);
       font-size: 1.1rem;
@@ -597,7 +559,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
     }
 
     .reviewer-name {
-      font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; /* ← FONT-FAMILY UPDATED */
+      font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
       font-size: 1.05rem;
       font-weight: 700;
       color: var(--text-ink);
@@ -623,7 +585,6 @@ $isLoggedIn = isset($_SESSION['user_id']);
       line-height: 1.6;
     }
 
-    /* CTA Banner */
     .cta-banner {
       padding: 70px 0;
       background-color: var(--rose-deep);
@@ -661,7 +622,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
 
     .cta-banner p {
       font-size: 1rem;
-      color: #9C9284;
+      color: var(--text-3);
       max-width: 560px;
       margin: 0 auto 28px auto;
     }
@@ -671,7 +632,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
       align-items: center;
       gap: 10px;
       background-color: var(--rose-accent);
-      color: #15130E;
+      color: var(--on-primary);
       padding: 14px 28px;
       font-size: 0.825rem;
       font-weight: 600;
@@ -685,9 +646,8 @@ $isLoggedIn = isset($_SESSION['user_id']);
       background-color: var(--rose-accent-hover);
     }
 
-    /* keep footer at page bottom on short pages */
     main { flex: 1 0 auto; }
-    /* Floating WhatsApp Button */
+
     .whatsapp-float {
       position: fixed;
       bottom: max(20px, env(safe-area-inset-bottom, 20px));
@@ -697,7 +657,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
       min-width: 48px;
       min-height: 48px;
       background-color: var(--whatsapp-green);
-      color: #15130E;
+      color: var(--on-whatsapp);
       border-radius: 50%;
       display: flex;
       align-items: center;
@@ -712,7 +672,6 @@ $isLoggedIn = isset($_SESSION['user_id']);
       box-shadow: 0 6px 20px rgba(37, 211, 102, 0.5);
     }
 
-    /* Scroll Reveal */
     .reveal {
       opacity: 0;
       transform: translateY(20px);
@@ -723,21 +682,18 @@ $isLoggedIn = isset($_SESSION['user_id']);
       opacity: 1;
       transform: translateY(0);
     }
-
-    @media (prefers-reduced-motion: reduce) {
+@media (prefers-reduced-motion: reduce) {
       .reveal {
         opacity: 1;
         transform: none;
         transition: none;
       }
-    }
+}
 
-    /* Mobile Responsive Nav Drawer */
     .mobile-menu-cta {
       display: none;
     }
-
-    @media (max-width: 860px) {
+@media (max-width: 860px) {
       .nav-links {
         display: none;
         position: absolute;
@@ -784,24 +740,25 @@ $isLoggedIn = isset($_SESSION['user_id']);
         border-radius: 4px;
       }
 
-
       .mobile-menu-cta {
         display: block;
         margin-top: 8px;
       }
-    }
-      /* ===== Deepkala Membership & Auth (shared) ===== */
+}
+
     .dk-price-old {
       text-decoration: line-through;
-      color: #8A8171;
+      color: var(--text-3);
       font-size: 0.78em;
       font-weight: 500;
       margin-right: 2px;
     }
+
     .dk-price-new {
       color: var(--rose-accent);
       font-weight: 700;
     }
+
     .dk-member-priced {
       display: inline-flex;
       align-items: baseline;
@@ -809,6 +766,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
       flex-wrap: wrap;
       justify-content: flex-end;
     }
+
     .dk-member-badge {
       font-size: 0.6rem;
       font-weight: 700;
@@ -818,36 +776,35 @@ $isLoggedIn = isset($_SESSION['user_id']);
       border-radius: 4px;
       white-space: nowrap;
     }
+
     .dk-badge-silver {
       background-color: rgba(201, 166, 107, 0.15);
       color: #C9A66B;
       border: 1px solid rgba(201, 166, 107, 0.4);
     }
+
     .dk-badge-gold {
       background-color: rgba(255, 214, 102, 0.15);
-      color: #FFD666;
+      color: var(--highlight);
       border: 1px solid rgba(255, 214, 102, 0.45);
     }
+
 .nav-member-badge { margin-left: 8px; font-size: 0.55rem !important; padding: 2px 7px !important; vertical-align: middle; }
-
-
-  </style>
+</style>
   <style>
-    /* Smooth native page transition (no JS, no opacity hacks -> no flicker) */
     @view-transition {
       navigation: auto;
     }
-  </style>
+</style>
   <style>
-    /* Accessibility: skip link */
     .skip-link {
       position: absolute;
       top: -48px;
       left: 8px;
       z-index: 3000;
       background-color: var(--rose-accent, #C9A66B);
-      color: #15130E;
-      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; /* ← FONT-FAMILY UPDATED */
+      color: var(--on-primary);
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
       font-weight: 700;
       font-size: 0.85rem;
       padding: 10px 18px;
@@ -855,12 +812,11 @@ $isLoggedIn = isset($_SESSION['user_id']);
       text-decoration: none;
       transition: top 0.2s ease;
     }
+
     .skip-link:focus {
       top: 8px;
     }
 
-
-    /* Accessibility: consistent visible focus styles across interactive elements */
     a:focus-visible,
     button:focus-visible,
     input:focus-visible,
@@ -872,24 +828,21 @@ $isLoggedIn = isset($_SESSION['user_id']);
       outline-offset: 2px;
       border-radius: 4px;
     }
-
-  </style>
+</style>
   <noscript>
     <style>
-      /* Accessibility: if JS fails to load, scroll-reveal content must still be visible */
       .reveal {
         opacity: 1 !important;
         transform: none !important;
         transition: none !important;
       }
-    </style>
+</style>
   </noscript>
   <link rel="stylesheet" href="assets/responsive.css?v=<?= filemtime(__DIR__ . '/assets/responsive.css') ?>">
 </head>
 <body>
   <a href="#main-content" class="skip-link">Skip to content</a>
 
-  <!-- Site Header / Navbar -->
   <header class="site-header" id="siteHeader">
     <div class="container header-inner">
       <a href="index.php" class="brand-logo" aria-label="Deepkala Hair Salon Homepage">
@@ -928,14 +881,12 @@ $isLoggedIn = isset($_SESSION['user_id']);
       </div>
     </div>
   </header>
-  <!-- Main Content -->
   <main id="main-content" tabindex="-1">
-    <!-- Hero Section -->
     <section class="hero-section">
       <div class="container reveal">
         <h1 class="hero-title font-serif">Master Craftsmanship in Hair Styling & Grooming</h1>
         <p class="hero-tagline">Precision cuts, modern skin fades, relaxing hair treatments, and sharp beard styling crafted for the modern individual.</p>
-        
+
         <div class="hero-ctas">
           <a href="booking.php" class="btn-primary">Book Appointment</a>
           <a href="services.php" class="btn-secondary">View Services & Pricing</a>
@@ -943,7 +894,6 @@ $isLoggedIn = isset($_SESSION['user_id']);
       </div>
     </section>
 
-    <!-- Highlights Strip -->
     <section class="highlights-section">
       <div class="container">
         <div class="highlights-grid">
@@ -971,7 +921,6 @@ $isLoggedIn = isset($_SESSION['user_id']);
       </div>
     </section>
 
-    <!-- Services Preview Section -->
     <section class="services-preview-section">
       <div class="container">
         <div class="category-header reveal">
@@ -1019,7 +968,6 @@ $isLoggedIn = isset($_SESSION['user_id']);
       </div>
     </section>
 
-    <!-- Testimonials Preview -->
     <section class="testimonials-section">
       <div class="container">
         <div class="category-header reveal">
@@ -1063,7 +1011,6 @@ $isLoggedIn = isset($_SESSION['user_id']);
       </div>
     </section>
 
-    <!-- CTA Banner -->
     <section class="cta-banner">
       <div class="container reveal">
         <h2 class="font-serif">Ready for Your Next Fresh Look?</h2>
@@ -1076,65 +1023,14 @@ $isLoggedIn = isset($_SESSION['user_id']);
     </section>
   </main>
 
-  <!-- Footer -->
-  <footer class="dk-footer" id="site-footer">
-    <div class="container">
-      <div class="dk-footer-main">
+<?php include 'backend/footer.php'; ?>
 
-        <div class="dk-footer-brand">
-          <a href="index.php" class="brand-logo" aria-label="Deepkala Hair Salon"> <img src="assets/deepkala-emblem.png" width="34" height="34" alt="Deepkala Hair Salon" style="border-radius:6px;object-fit:cover;"> <div> <div class="logo-text-title">DEEPKALA</div> <div class="logo-text-sub">HAIR SALON</div> </div> </a>
-          <p class="dk-footer-desc">Master craftsmanship, precision haircuts, and dedicated personal grooming in Ghodasar, Ahmedabad.</p>
-          <div class="dk-footer-social">
-            <a href="https://wa.me/919924620958?text=Hi%20Deepkala%20Hair%20Salon" target="_blank" rel="noopener noreferrer" aria-label="Chat on WhatsApp" title="WhatsApp"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg></a>
-            <a href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" title="Instagram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></a>
-            <a href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer" aria-label="Facebook" title="Facebook"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
-          </div>
-        </div>
-
-        <nav class="dk-footer-col" aria-label="Quick Links">
-          <h3 class="dk-footer-title">Quick Links</h3>
-          <ul class="dk-footer-list">
-            <li><a href="index.php">Home</a></li>
-            <li><a href="services.php">Services</a></li>
-            <li><a href="reviews.php">Client Reviews</a></li>
-            <li><a href="about.php">About</a></li>
-          </ul>
-        </nav>
-
-        <nav class="dk-footer-col" aria-label="Book and Visit">
-          <h3 class="dk-footer-title">Book &amp; Visit</h3>
-          <ul class="dk-footer-list">
-            <li><a href="booking.php">Reserve Slot</a></li>
-            <li><a href="membership.php">Membership</a></li>
-            <li><a href="contact.php">Contact</a></li>
-          </ul>
-        </nav>
-
-        <div class="dk-footer-col dk-footer-contact">
-          <h3 class="dk-footer-title">Salon Info</h3>
-          <ul class="dk-footer-info">
-            <li><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12 19.5s-6.5-5.4-6.5-10.5a6.5 6.5 0 0113 0c0 5.1-6.5 10.5-6.5 10.5zM12 6.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5z"/><ellipse cx="12" cy="21.6" rx="5" ry="1.1" opacity=".55"/></svg><div><small>Salon Address</small><a href="https://www.google.com/maps/search/?api=1&query=2+Jayvimal+Society+Cadila+Road+Ghodasar+Ahmedabad+380050" target="_blank" rel="noopener noreferrer" title="Open in Google Maps">2 Jayvimal Society, Cadila Road, Ghodasar, Ahmedabad – 380050</a></div></li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg><div><small>Phone No</small><a href="tel:+919924620958">+91 99246 20958</a></div></li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><div><small>Timings</small>9:00 AM – 9:00 PM, Daily</div></li>
-          </ul>
-        </div>
-
-      </div>
-
-      <hr class="dk-footer-hr">
-      <p class="dk-footer-copy">© 2026 Deepkala Hair Salon. All rights reserved.</p>
-    </div>
-  </footer>
-
-  <!-- Floating WhatsApp Button -->
   <a href="https://wa.me/919924620958?text=Hi%20Deepkala%20Hair%20Salon%2C%20I%27d%20like%20to%20know%20more" class="whatsapp-float" target="_blank" rel="noopener noreferrer" title="Chat on WhatsApp">
     <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
   </a>
 
-  <!-- Shared Script -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // Scroll Reveal Observer
       const observerOptions = { threshold: 0.1 };
       const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
@@ -1146,12 +1042,11 @@ $isLoggedIn = isset($_SESSION['user_id']);
 
       document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-      // Mobile Menu Toggle & Accessibility
       const menuBtn = document.getElementById('mobileMenuBtn');
       const navLinks = document.getElementById('navLinks');
       if (menuBtn && navLinks) {
         menuBtn.setAttribute('aria-expanded', 'false');
-        
+
         const toggleMenu = (show) => {
           const isOpen = show !== undefined ? show : !navLinks.classList.contains('show');
           navLinks.classList.toggle('show', isOpen);
@@ -1163,27 +1058,23 @@ $isLoggedIn = isset($_SESSION['user_id']);
           toggleMenu();
         });
 
-        // Close when clicking outside menu
         document.addEventListener('click', (e) => {
           if (!navLinks.contains(e.target) && !menuBtn.contains(e.target)) {
             toggleMenu(false);
           }
         });
 
-        // Close on ESC key
         document.addEventListener('keydown', (e) => {
           if (e.key === 'Escape') {
             toggleMenu(false);
           }
         });
 
-        // Close when clicking a menu link
         navLinks.querySelectorAll('a').forEach(link => {
           link.addEventListener('click', () => toggleMenu(false));
         });
       }
 
-      // Sticky Header Shadow
       const header = document.getElementById('siteHeader');
       if (header) {
         window.addEventListener('scroll', () => {
@@ -1198,7 +1089,6 @@ $isLoggedIn = isset($_SESSION['user_id']);
   </script>
 
   <script>
-    /* ===== Deepkala Membership & Auth (client-side demo, no backend) ===== */
     const DK_USER_KEY = 'dk_user';
     const DK_MEMBERSHIP_KEY = 'dk_membership';
 
@@ -1215,7 +1105,6 @@ $isLoggedIn = isset($_SESSION['user_id']);
       return tier === 'gold' ? 'Gold Member' : tier === 'silver' ? 'Silver Member' : '';
     }
 
-    // Auto-apply member discount to every element with class "service-price"
     function dkApplyMemberPricing() {
       const membership = dkGetMembership();
       const priceEls = document.querySelectorAll('.service-price');
@@ -1237,7 +1126,6 @@ $isLoggedIn = isset($_SESSION['user_id']);
       });
     }
 
-    // Render the header auth area: Login link, or account pill with member badge + logout
     function dkRenderAuthNav() {}
 
     document.addEventListener('DOMContentLoaded', () => {

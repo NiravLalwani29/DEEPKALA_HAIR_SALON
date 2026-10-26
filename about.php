@@ -17,18 +17,16 @@ $isLoggedIn = isset($_SESSION['user_id']);
   {"@context":"https://schema.org","@type":"HairSalon","name":"Deepkala Hair Salon","telephone":"+919924620958","priceRange":"₹","address":{"@type":"PostalAddress","streetAddress":"2 Jayvimal Society, Cadila Road, Ghodasar","addressLocality":"Ahmedabad","postalCode":"380050","addressCountry":"IN"},"openingHours":"Mo-Su 09:00-21:00"}
   </script>
 
-  <!-- Favicon -->
   <link rel="preconnect" href="https://images.unsplash.com">
   <link rel="preload" as="image" href="https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=1600&q=70&auto=format&fit=crop">
   <link rel="icon" type="image/png" href="assets/deepkala-emblem.png">
 
-  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <!-- FONT-FAMILY UPDATED: Fraunces + Karla → Playfair Display + Inter -->
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@300..800&family=Playfair+Display:wght@400..900&display=swap" onload="this.onload=null;this.rel='stylesheet'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300..800&family=Playfair+Display:wght@400..900&display=swap"></noscript>
 
+  <link rel="stylesheet" href="assets/theme.css?v=<?= filemtime(__DIR__ . '/assets/theme.css') ?>">
   <style>
     * {
       box-sizing: border-box;
@@ -36,23 +34,9 @@ $isLoggedIn = isset($_SESSION['user_id']);
       padding: 0;
     }
 
-    :root {
-      --bg-cream: #15130E;
-      --text-ink: #F3EEE2;
-      --rose-accent: #C9A66B;
-      --rose-accent-hover: #B8935A;
-      --rose-deep: #0A0806;
-      --bronze-taupe: #A9884C;
-      --card-white: #1E1A14;
-      --card-cream: #221E17;
-      --border-hairline: #7A6C55;
-      --whatsapp-green: #25D366;
-      --gold-glow: #FFD666;
-    }
-
     html {
       scroll-behavior: smooth;
-      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; /* ← FONT-FAMILY UPDATED */
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
       background-color: var(--bg-cream);
       color: var(--text-ink);
       line-height: 1.6;
@@ -67,7 +51,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
       display: flex;
       flex-direction: column;
       width: 100%;
-      overflow-x: clip; /* clip (not hidden) keeps the sticky header working */
+      overflow-x: clip;
     }
 
     img, svg, iframe, video {
@@ -88,23 +72,21 @@ $isLoggedIn = isset($_SESSION['user_id']);
       margin: 0 auto;
       padding: 0 24px;
     }
-
-    @media (max-width: 768px) {
+@media (max-width: 768px) {
       .container {
         padding: 0 16px;
       }
-    }
-
-    @media (max-width: 380px) {
+}
+@media (max-width: 380px) {
       .container {
         padding: 0 12px;
       }
-    }
+}
 
-    .font-serif { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; /* ← FONT-FAMILY UPDATED */ }
-    h1.font-serif { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; /* ← FONT-FAMILY UPDATED */ }
+    .font-serif { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; }
 
-    /* Header */
+    h1.font-serif { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; }
+
     .site-header {
       position: sticky;
       top: 0;
@@ -125,8 +107,8 @@ $isLoggedIn = isset($_SESSION['user_id']);
     .brand-logo { display: flex; align-items: center; gap: 12px; }
 
     .logo-text-title {
-      font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; /* ← FONT-FAMILY UPDATED */
-     
+      font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+
       font-size: 1.25rem;
       font-weight: 700;
       letter-spacing: 0.06em;
@@ -135,7 +117,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
     }
 
     .logo-text-sub {
-      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; /* ← FONT-FAMILY UPDATED */
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
       font-size: 0.65rem;
       font-weight: 600;
       text-transform: uppercase;
@@ -176,7 +158,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
       letter-spacing: 0.06em;
       text-transform: uppercase;
       background-color: var(--rose-accent);
-      color: #15130E;
+      color: var(--on-primary);
       border: 1px solid var(--rose-accent);
       border-radius: 4px;
       transition: all 0.2s ease;
@@ -186,7 +168,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
     .header-book-btn:hover {
       background-color: var(--rose-accent-hover);
       border-color: var(--rose-accent-hover);
-      color: #15130E;
+      color: var(--on-primary);
       transform: translateY(-1px);
       box-shadow: 0 4px 12px rgba(10, 8, 6, 0.35);
     }
@@ -199,7 +181,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
       width: 100%;
       padding: 10px 16px;
       background-color: var(--whatsapp-green);
-      color: #15130E !important;
+      color: var(--on-whatsapp) !important;
       font-size: 0.85rem;
       font-weight: 600;
       border-radius: 4px;
@@ -208,8 +190,8 @@ $isLoggedIn = isset($_SESSION['user_id']);
     }
 
     .btn-whatsapp-cta:hover {
-      background-color: #20BA56;
-      color: #15130E !important;
+      background-color: var(--whatsapp-hover);
+      color: var(--on-whatsapp) !important;
     }
 
     .mobile-toggle {
@@ -221,16 +203,10 @@ $isLoggedIn = isset($_SESSION['user_id']);
       color: var(--text-ink);
     }
 
-    /* ============================================================
-       ABOUT PAGE — NEW ARCHITECTURE
-       Cinematic hero → stat strip → vertical story timeline →
-       numbered values list → team filmstrip → split visit band
-       ============================================================ */
-
     .eyebrow-tag {
       display: inline-block;
-      background-color: var(--text-ink);
-      color: var(--bg-cream);
+      background-color: var(--brand);
+      color: var(--on-brand);
       padding: 6px 14px;
       font-size: 0.75rem;
       font-weight: 700;
@@ -257,7 +233,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
       justify-content: center;
       gap: 10px;
       background-color: var(--rose-accent);
-      color: #15130E;
+      color: var(--on-primary);
       padding: 14px 28px;
       font-size: 0.825rem;
       font-weight: 600;
@@ -276,8 +252,6 @@ $isLoggedIn = isset($_SESSION['user_id']);
       box-shadow: 0 6px 18px rgba(10,8,6,0.35);
     }
 
-
-    /* ---------- 1. Cinematic full-bleed hero ---------- */
     .ab-hero {
       position: relative;
       min-height: 78vh;
@@ -310,7 +284,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
 
     .ab-hero-inner .eyebrow-tag {
       background-color: var(--rose-accent);
-      color: #15130E;
+      color: var(--on-primary);
       margin-bottom: 20px;
     }
 
@@ -348,14 +322,14 @@ $isLoggedIn = isset($_SESSION['user_id']);
       opacity: 0.85;
       transition: opacity 0.2s ease;
     }
+
     .ab-scroll-cue:hover { opacity: 1; color: var(--rose-accent); }
-
-    @media (max-width: 640px) {
+@media (max-width: 640px) {
       .ab-hero { min-height: 64vh; }
-      .ab-hero-inner { padding: 120px 0 64px 0; }
-    }
 
-    /* ---------- 2. Stat strip ---------- */
+      .ab-hero-inner { padding: 120px 0 64px 0; }
+}
+
     .ab-stat-strip {
       background-color: var(--card-white);
       border-bottom: 1px solid var(--border-hairline);
@@ -371,6 +345,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
       text-align: center;
       border-right: 1px solid var(--border-hairline);
     }
+
     .ab-stat:last-child { border-right: none; }
 
     .ab-stat span {
@@ -388,17 +363,17 @@ $isLoggedIn = isset($_SESSION['user_id']);
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.06em;
-      color: #9C9284;
+      color: var(--text-3);
     }
-
-    @media (max-width: 640px) {
+@media (max-width: 640px) {
       .ab-stat-strip-inner { grid-template-columns: repeat(2, 1fr); }
+
       .ab-stat:nth-child(2) { border-right: none; }
+
       .ab-stat:nth-child(1), .ab-stat:nth-child(2) { border-bottom: 1px solid var(--border-hairline); }
-    }
+}
 
     .ab-section { padding: 2px 0; }
-    /* .ab-section + .ab-section { border-top: 1px solid var(--border-hairline); } */
 
     .ab-section-title {
       font-size: clamp(1.6rem, 3vw, 2.2rem);
@@ -408,7 +383,6 @@ $isLoggedIn = isset($_SESSION['user_id']);
       margin-bottom: 36px;
     }
 
-    /* ---------- 3. Story timeline ---------- */
     .ab-timeline {
       position: relative;
       max-width: 780px;
@@ -429,6 +403,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
       gap: 28px;
       padding-bottom: 44px;
     }
+
     .ab-timeline-item:last-child { padding-bottom: 0; }
 
     .ab-timeline-marker {
@@ -458,17 +433,17 @@ $isLoggedIn = isset($_SESSION['user_id']);
     .ab-timeline-content p {
       font-size: 0.95rem;
       line-height: 1.8;
-      color: #B3AA98;
+      color: var(--text-2);
       max-width: 620px;
     }
-
-    @media (max-width: 560px) {
+@media (max-width: 560px) {
       .ab-timeline::before { left: 21px; }
-      .ab-timeline-marker { width: 44px; height: 44px; font-size: 0.9rem; }
-      .ab-timeline-item { gap: 18px; }
-    }
 
-    /* ---------- 4. Values — numbered list ---------- */
+      .ab-timeline-marker { width: 44px; height: 44px; font-size: 0.9rem; }
+
+      .ab-timeline-item { gap: 18px; }
+}
+
     .ab-values-list {
       display: flex;
       flex-direction: column;
@@ -483,7 +458,6 @@ $isLoggedIn = isset($_SESSION['user_id']);
       align-items: start;
       transition: padding-left 0.2s ease;
     }
-    /* .ab-value-row:last-child { border-bottom: 1px solid var(--border-hairline); } */
 
     .ab-value-row:hover { padding-left: 8px; }
 
@@ -495,6 +469,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
       line-height: 1;
       transition: color 0.2s ease;
     }
+
     .ab-value-row:hover .ab-value-num { color: var(--rose-accent); }
 
     .ab-value-body { display: grid; grid-template-columns: 1fr 1.4fr; gap: 20px; align-items: baseline; }
@@ -508,27 +483,28 @@ $isLoggedIn = isset($_SESSION['user_id']);
 
     .ab-value-body p {
       font-size: 0.9rem;
-      color: #9C9284;
+      color: var(--text-3);
       line-height: 1.65;
     }
-
-    @media (max-width: 720px) {
+@media (max-width: 720px) {
       .ab-value-body { grid-template-columns: 1fr; gap: 8px; }
-      .ab-value-row { grid-template-columns: 56px 1fr; }
-      .ab-value-num { font-size: 1.5rem; }
-    }
 
-    /* ---------- 5. Team filmstrip (flip cards) ---------- */
+      .ab-value-row { grid-template-columns: 56px 1fr; }
+
+      .ab-value-num { font-size: 1.5rem; }
+}
+
     .ab-team-scroll {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
       gap: 20px;
       padding-bottom: 12px;
     }
+
     .ab-team-scroll::-webkit-scrollbar { height: 6px; }
+
     .ab-team-scroll::-webkit-scrollbar-thumb { background: var(--border-hairline); border-radius: 6px; }
 
-    /* Flip card shell: gives the 3D stage its depth and size */
     .ab-team-card {
       scroll-snap-align: start;
       width: 100%;
@@ -548,12 +524,10 @@ $isLoggedIn = isset($_SESSION['user_id']);
       transition: transform 0.7s cubic-bezier(0.45, 0.05, 0.2, 1);
       outline: none;
     }
-
-    /* Desktop / mouse: flip on hover */
-    @media (hover: hover) {
+@media (hover: hover) {
       .ab-team-card:hover .ab-team-card-inner { transform: rotateY(180deg); }
-    }
-    /* Touch / keyboard: flip on tap or focus */
+}
+
     .ab-team-card-inner.is-flipped,
     .ab-team-card-inner:focus-visible { transform: rotateY(180deg); }
 
@@ -569,6 +543,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
       flex-direction: column;
       transition: border-color 0.25s ease;
     }
+
     .ab-team-card-inner:hover .ab-team-card-face { border-color: var(--rose-accent); }
 
     .ab-team-card-back {
@@ -608,14 +583,13 @@ $isLoggedIn = isset($_SESSION['user_id']);
       margin-bottom: 12px;
     }
 
-
-    /* Back face content */
     .ab-team-back-body {
       padding: 26px 24px;
       display: flex;
       flex-direction: column;
       height: 100%;
     }
+
     .ab-team-back-icon {
       width: 40px;
       height: 40px;
@@ -630,13 +604,16 @@ $isLoggedIn = isset($_SESSION['user_id']);
       margin-bottom: 14px;
       flex-shrink: 0;
     }
+
     .ab-team-back-body .ab-team-name { font-size: 1.05rem; }
+
     .ab-team-back-bio {
       font-size: 0.85rem;
-      color: #9C9284;
+      color: var(--text-3);
       line-height: 1.6;
       flex-grow: 1;
     }
+
     .ab-team-back-cta {
       display: inline-flex;
       align-items: center;
@@ -648,12 +625,14 @@ $isLoggedIn = isset($_SESSION['user_id']);
       text-transform: uppercase;
       letter-spacing: 0.08em;
       background-color: var(--rose-accent);
-      color: #15130E;
+      color: var(--on-primary);
       border-radius: 4px;
       transition: background-color 0.2s ease;
       flex-shrink: 0;
     }
+
     .ab-team-back-cta:hover { background-color: var(--rose-accent-hover); }
+
     .ab-team-flip-hint {
       font-size: 0.65rem;
       text-transform: uppercase;
@@ -663,16 +642,14 @@ $isLoggedIn = isset($_SESSION['user_id']);
       flex-shrink: 0;
     }
 
-    /* ---------- 6. Visit — split band ---------- */
     .ab-visit {
       display: grid;
       grid-template-columns: 1fr;
       border-top: 1px solid var(--border-hairline);
     }
-
-    @media (min-width: 860px) {
+@media (min-width: 860px) {
       .ab-visit { grid-template-columns: 1fr 1fr; min-height: 380px; }
-    }
+}
 
     .ab-visit-info {
       background-color: var(--card-cream);
@@ -697,7 +674,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
       margin: 16px 0 12px;
     }
 
-    .ab-visit-info p { font-size: 0.95rem; color: #B3AA98; }
+    .ab-visit-info p { font-size: 0.95rem; color: var(--text-2); }
 
     .ab-visit-image {
       min-height: 280px;
@@ -705,9 +682,8 @@ $isLoggedIn = isset($_SESSION['user_id']);
       filter: grayscale(10%) contrast(1.05);
     }
 
-    /* keep footer at page bottom on short pages */
     main { flex: 1 0 auto; }
-    /* Floating WhatsApp Button */
+
     .whatsapp-float {
       position: fixed;
       bottom: max(20px, env(safe-area-inset-bottom, 20px));
@@ -717,7 +693,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
       min-width: 48px;
       min-height: 48px;
       background-color: var(--whatsapp-green);
-      color: #15130E;
+      color: var(--on-whatsapp);
       border-radius: 50%;
       display: flex;
       align-items: center;
@@ -736,13 +712,13 @@ $isLoggedIn = isset($_SESSION['user_id']);
       opacity: 0; transform: translateY(20px);
       transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
     }
+
     .reveal.active { opacity: 1; transform: translateY(0); }
 
     .mobile-menu-cta {
       display: none;
     }
-
-    @media (max-width: 860px) {
+@media (max-width: 860px) {
       .nav-links {
         display: none;
         position: absolute;
@@ -789,24 +765,25 @@ $isLoggedIn = isset($_SESSION['user_id']);
         border-radius: 4px;
       }
 
-
       .mobile-menu-cta {
         display: block;
         margin-top: 8px;
       }
-    }
-      /* ===== Deepkala Membership & Auth (shared) ===== */
+}
+
     .dk-price-old {
       text-decoration: line-through;
-      color: #8A8171;
+      color: var(--text-3);
       font-size: 0.78em;
       font-weight: 500;
       margin-right: 2px;
     }
+
     .dk-price-new {
       color: var(--rose-accent);
       font-weight: 700;
     }
+
     .dk-member-priced {
       display: inline-flex;
       align-items: baseline;
@@ -814,6 +791,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
       flex-wrap: wrap;
       justify-content: flex-end;
     }
+
     .dk-member-badge {
       font-size: 0.6rem;
       font-weight: 700;
@@ -823,36 +801,35 @@ $isLoggedIn = isset($_SESSION['user_id']);
       border-radius: 4px;
       white-space: nowrap;
     }
+
     .dk-badge-silver {
       background-color: rgba(201, 166, 107, 0.15);
       color: #C9A66B;
       border: 1px solid rgba(201, 166, 107, 0.4);
     }
+
     .dk-badge-gold {
       background-color: rgba(255, 214, 102, 0.15);
-      color: #FFD666;
+      color: var(--highlight);
       border: 1px solid rgba(255, 214, 102, 0.45);
     }
+
 .nav-member-badge { margin-left: 8px; font-size: 0.55rem !important; padding: 2px 7px !important; vertical-align: middle; }
-
-
-  </style>
+</style>
   <style>
-    /* Smooth native page transition (no JS, no opacity hacks -> no flicker) */
     @view-transition {
       navigation: auto;
     }
-  </style>
+</style>
   <style>
-    /* Accessibility: skip link */
     .skip-link {
       position: absolute;
       top: -48px;
       left: 8px;
       z-index: 3000;
       background-color: var(--rose-accent, #C9A66B);
-      color: #15130E;
-      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; /* ← FONT-FAMILY UPDATED */
+      color: var(--on-primary);
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
       font-weight: 700;
       font-size: 0.85rem;
       padding: 10px 18px;
@@ -860,12 +837,11 @@ $isLoggedIn = isset($_SESSION['user_id']);
       text-decoration: none;
       transition: top 0.2s ease;
     }
+
     .skip-link:focus {
       top: 8px;
     }
 
-
-    /* Accessibility: consistent visible focus styles across interactive elements */
     a:focus-visible,
     button:focus-visible,
     input:focus-visible,
@@ -877,31 +853,27 @@ $isLoggedIn = isset($_SESSION['user_id']);
       outline-offset: 2px;
       border-radius: 4px;
     }
-
-    @media (prefers-reduced-motion: reduce) {
+@media (prefers-reduced-motion: reduce) {
       .reveal {
         opacity: 1;
         transform: none;
         transition: none;
       }
-    }
-
-  </style>
+}
+</style>
   <noscript>
     <style>
-      /* Accessibility: if JS fails to load, scroll-reveal content must still be visible */
       .reveal {
         opacity: 1 !important;
         transform: none !important;
         transition: none !important;
       }
-    </style>
+</style>
   </noscript>
   <link rel="stylesheet" href="assets/responsive.css?v=<?= filemtime(__DIR__ . '/assets/responsive.css') ?>">
 </head>
 <body>
   <a href="#main-content" class="skip-link">Skip to content</a>
-  <!-- Header -->
   <header class="site-header" id="siteHeader">
     <div class="container header-inner">
       <a href="index.php" class="brand-logo" aria-label="Deepkala Hair Salon">
@@ -942,7 +914,6 @@ $isLoggedIn = isset($_SESSION['user_id']);
   </header>
   <main id="main-content" tabindex="-1">
 
-    <!-- 1. Cinematic Hero -->
     <section class="ab-hero">
       <div class="ab-hero-bg" aria-hidden="true"></div>
       <div class="ab-hero-scrim" aria-hidden="true"></div>
@@ -957,7 +928,6 @@ $isLoggedIn = isset($_SESSION['user_id']);
       </div>
     </section>
 
-    <!-- 2. Stat Strip -->
     <section class="ab-stat-strip reveal">
       <div class="container ab-stat-strip-inner">
         <div class="ab-stat">
@@ -981,7 +951,6 @@ $isLoggedIn = isset($_SESSION['user_id']);
 
     <div class="container">
 
-      <!-- 3. Story Timeline -->
       <section class="ab-section reveal" id="ab-story">
         <div class="category-header">
           <span class="eyebrow-tag">OUR JOURNEY</span>
@@ -1014,7 +983,6 @@ $isLoggedIn = isset($_SESSION['user_id']);
         </div>
       </section>
 
-      <!-- 4. Values — numbered list -->
       <section class="ab-section reveal">
         <div class="category-header">
           <span class="eyebrow-tag">OUR VALUES</span>
@@ -1054,7 +1022,6 @@ $isLoggedIn = isset($_SESSION['user_id']);
         </div>
       </section>
 
-      <!-- 5. Team filmstrip -->
       <section class="ab-section">
         <div class="category-header">
           <span class="eyebrow-tag">OUR TEAM</span>
@@ -1080,7 +1047,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
                   <div class="ab-team-name">Deepesh Parmar</div>
                   <div class="ab-team-role">Founder &amp; Master Stylist</div>
                   <p class="ab-team-back-bio">Over 12 years of experience in classic barbering, advanced scissor techniques and client consultation.</p>
-                  <a href="booking.php" class="ab-team-back-cta" onclick="event.stopPropagation()">Book Now</a>
+                  <a href="booking.php?stylist=Deepesh+Parmar" class="ab-team-back-cta" onclick="event.stopPropagation()">Book Now</a>
                 </div>
               </div>
             </div>
@@ -1102,7 +1069,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
                   <div class="ab-team-name">Kalpesh Patel</div>
                   <div class="ab-team-role">Senior Fade &amp; Colour Specialist</div>
                   <p class="ab-team-back-bio">Specialises in skin fades, undercuts, textured crop cuts and custom hair colouring.</p>
-                  <a href="booking.php" class="ab-team-back-cta" onclick="event.stopPropagation()">Book Now</a>
+                  <a href="booking.php?stylist=Kalpesh+Patel" class="ab-team-back-cta" onclick="event.stopPropagation()">Book Now</a>
                 </div>
               </div>
             </div>
@@ -1124,7 +1091,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
                   <div class="ab-team-name">Sanjay Kumar</div>
                   <div class="ab-team-role">Beard Specialist &amp; Spa Therapist</div>
                   <p class="ab-team-back-bio">Experienced in razor lining, hot towel shaves, scalp massage and nourishing hair spa treatments.</p>
-                  <a href="booking.php" class="ab-team-back-cta" onclick="event.stopPropagation()">Book Now</a>
+                  <a href="booking.php?stylist=Sanjay+Kumar" class="ab-team-back-cta" onclick="event.stopPropagation()">Book Now</a>
                 </div>
               </div>
             </div>
@@ -1132,7 +1099,6 @@ $isLoggedIn = isset($_SESSION['user_id']);
 
           <div class="ab-team-card">
             <div class="ab-team-card-inner" tabindex="0" role="button" aria-label="Flip to read more about Nisha Solanki" onclick="this.classList.toggle('is-flipped')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.classList.toggle('is-flipped');}">
-              <!-- TODO: placeholder name — replace with the artist's real name, photo and experience -->
               <div class="ab-team-card-face ab-team-card-front">
                 <div class="ab-team-photo">NS</div>
                 <div class="ab-team-body">
@@ -1147,12 +1113,11 @@ $isLoggedIn = isset($_SESSION['user_id']);
                   <div class="ab-team-name">Nisha Solanki</div>
                   <div class="ab-team-role">Bridal &amp; Wedding Makeup Artist</div>
                   <p class="ab-team-back-bio">Specialises in bridal, engagement and reception makeup, tailored to the occasion, outfit and skin type.</p>
-                  <a href="booking.php" class="ab-team-back-cta" onclick="event.stopPropagation()">Book Now</a>
+                  <a href="booking.php?stylist=Nisha+Solanki" class="ab-team-back-cta" onclick="event.stopPropagation()">Book Now</a>
                 </div>
               </div>
             </div>
           </div>
-
 
           <div class="ab-team-card">
             <div class="ab-team-card-inner" tabindex="0" role="button" aria-label="Flip to read more about Rahul Desai" onclick="this.classList.toggle('is-flipped')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.classList.toggle('is-flipped');}">
@@ -1170,7 +1135,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
                   <div class="ab-team-name">Rahul Desai</div>
                   <div class="ab-team-role">Senior Barber</div>
                   <p class="ab-team-back-bio">Skin fades, classic tapers and sharp hairlines, built on years behind the chair.</p>
-                  <a href="booking.php" class="ab-team-back-cta" onclick="event.stopPropagation()">Book Now</a>
+                  <a href="booking.php?stylist=Rahul+Desai" class="ab-team-back-cta" onclick="event.stopPropagation()">Book Now</a>
                 </div>
               </div>
             </div>
@@ -1192,7 +1157,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
                   <div class="ab-team-name">Amit Joshi</div>
                   <div class="ab-team-role">Beard &amp; Grooming Specialist</div>
                   <p class="ab-team-back-bio">Beard shaping, hot-towel shaves and detailed grooming for a clean, polished finish.</p>
-                  <a href="booking.php" class="ab-team-back-cta" onclick="event.stopPropagation()">Book Now</a>
+                  <a href="booking.php?stylist=Amit+Joshi" class="ab-team-back-cta" onclick="event.stopPropagation()">Book Now</a>
                 </div>
               </div>
             </div>
@@ -1214,7 +1179,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
                   <div class="ab-team-name">Priya Shah</div>
                   <div class="ab-team-role">Hair Colour Specialist</div>
                   <p class="ab-team-back-bio">Global colour, highlights and toning, planned around your hair type and skin tone.</p>
-                  <a href="booking.php" class="ab-team-back-cta" onclick="event.stopPropagation()">Book Now</a>
+                  <a href="booking.php?stylist=Priya+Shah" class="ab-team-back-cta" onclick="event.stopPropagation()">Book Now</a>
                 </div>
               </div>
             </div>
@@ -1236,7 +1201,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
                   <div class="ab-team-name">Vikram Rathod</div>
                   <div class="ab-team-role">Stylist</div>
                   <p class="ab-team-back-bio">Modern cuts and textured styling, with a calm and precise approach to every client.</p>
-                  <a href="booking.php" class="ab-team-back-cta" onclick="event.stopPropagation()">Book Now</a>
+                  <a href="booking.php?stylist=Vikram+Rathod" class="ab-team-back-cta" onclick="event.stopPropagation()">Book Now</a>
                 </div>
               </div>
             </div>
@@ -1247,7 +1212,6 @@ $isLoggedIn = isset($_SESSION['user_id']);
 
     </div>
 
-    <!-- 6. Visit — split band -->
     <section class="ab-visit reveal">
       <div class="ab-visit-info">
         <div class="hours-pin"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
@@ -1263,57 +1227,8 @@ $isLoggedIn = isset($_SESSION['user_id']);
 
   </main>
 
-  <!-- Footer -->
-  <footer class="dk-footer" id="site-footer">
-    <div class="container">
-      <div class="dk-footer-main">
+<?php include 'backend/footer.php'; ?>
 
-        <div class="dk-footer-brand">
-          <a href="index.php" class="brand-logo" aria-label="Deepkala Hair Salon"> <img src="assets/deepkala-emblem.png" width="34" height="34" alt="Deepkala Hair Salon" style="border-radius:6px;object-fit:cover;"> <div> <div class="logo-text-title">DEEPKALA</div> <div class="logo-text-sub">HAIR SALON</div> </div> </a>
-          <p class="dk-footer-desc">Master craftsmanship, precision haircuts, and dedicated personal grooming in Ghodasar, Ahmedabad.</p>
-          <div class="dk-footer-social">
-            <a href="https://wa.me/919924620958?text=Hi%20Deepkala%20Hair%20Salon" target="_blank" rel="noopener noreferrer" aria-label="Chat on WhatsApp" title="WhatsApp"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg></a>
-            <a href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" title="Instagram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></a>
-            <a href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer" aria-label="Facebook" title="Facebook"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
-          </div>
-        </div>
-
-        <nav class="dk-footer-col" aria-label="Quick Links">
-          <h3 class="dk-footer-title">Quick Links</h3>
-          <ul class="dk-footer-list">
-            <li><a href="index.php">Home</a></li>
-            <li><a href="services.php">Services</a></li>
-            <li><a href="reviews.php">Client Reviews</a></li>
-            <li><a href="about.php">About</a></li>
-          </ul>
-        </nav>
-
-        <nav class="dk-footer-col" aria-label="Book and Visit">
-          <h3 class="dk-footer-title">Book &amp; Visit</h3>
-          <ul class="dk-footer-list">
-            <li><a href="booking.php">Reserve Slot</a></li>
-            <li><a href="membership.php">Membership</a></li>
-            <li><a href="contact.php">Contact</a></li>
-          </ul>
-        </nav>
-
-        <div class="dk-footer-col dk-footer-contact">
-          <h3 class="dk-footer-title">Salon Info</h3>
-          <ul class="dk-footer-info">
-            <li><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12 19.5s-6.5-5.4-6.5-10.5a6.5 6.5 0 0113 0c0 5.1-6.5 10.5-6.5 10.5zM12 6.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5z"/><ellipse cx="12" cy="21.6" rx="5" ry="1.1" opacity=".55"/></svg><div><small>Salon Address</small><a href="https://www.google.com/maps/search/?api=1&query=2+Jayvimal+Society+Cadila+Road+Ghodasar+Ahmedabad+380050" target="_blank" rel="noopener noreferrer" title="Open in Google Maps">2 Jayvimal Society, Cadila Road, Ghodasar, Ahmedabad – 380050</a></div></li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg><div><small>Phone No</small><a href="tel:+919924620958">+91 99246 20958</a></div></li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><div><small>Timings</small>9:00 AM – 9:00 PM, Daily</div></li>
-          </ul>
-        </div>
-
-      </div>
-
-      <hr class="dk-footer-hr">
-      <p class="dk-footer-copy">© 2026 Deepkala Hair Salon. All rights reserved.</p>
-    </div>
-  </footer>
-
-  <!-- Floating WhatsApp -->
   <a href="https://wa.me/919924620958?text=Hi%20Deepkala%20Hair%20Salon%2C%20I%27d%20like%20to%20know%20more" class="whatsapp-float" target="_blank" rel="noopener noreferrer" title="Chat on WhatsApp">
     <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
   </a>
@@ -1328,12 +1243,11 @@ $isLoggedIn = isset($_SESSION['user_id']);
 
       document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-      // Mobile Menu Toggle & Accessibility
       const menuBtn = document.getElementById('mobileMenuBtn');
       const navLinks = document.getElementById('navLinks');
       if (menuBtn && navLinks) {
         menuBtn.setAttribute('aria-expanded', 'false');
-        
+
         const toggleMenu = (show) => {
           const isOpen = show !== undefined ? show : !navLinks.classList.contains('show');
           navLinks.classList.toggle('show', isOpen);
@@ -1362,7 +1276,6 @@ $isLoggedIn = isset($_SESSION['user_id']);
         });
       }
 
-      // Sticky Header Shadow
       const header = document.getElementById('siteHeader');
       if (header) {
         window.addEventListener('scroll', () => {
@@ -1377,7 +1290,6 @@ $isLoggedIn = isset($_SESSION['user_id']);
   </script>
 
   <script>
-    /* ===== Deepkala Membership & Auth (client-side demo, no backend) ===== */
     const DK_USER_KEY = 'dk_user';
     const DK_MEMBERSHIP_KEY = 'dk_membership';
 
@@ -1394,7 +1306,6 @@ $isLoggedIn = isset($_SESSION['user_id']);
       return tier === 'gold' ? 'Gold Member' : tier === 'silver' ? 'Silver Member' : '';
     }
 
-    // Auto-apply member discount to every element with class "service-price"
     function dkApplyMemberPricing() {
       const membership = dkGetMembership();
       const priceEls = document.querySelectorAll('.service-price');
@@ -1416,7 +1327,6 @@ $isLoggedIn = isset($_SESSION['user_id']);
       });
     }
 
-    // Render the header auth area: Login link, or account pill with member badge + logout
     function dkRenderAuthNav() {}
 
     document.addEventListener('DOMContentLoaded', () => {
