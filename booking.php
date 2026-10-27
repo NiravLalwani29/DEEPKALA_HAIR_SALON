@@ -1716,10 +1716,6 @@ if ($isLoggedIn) {
       return valid;
     }
 
-    function generateTxnId() {
-      return 'TXN' + Math.random().toString(36).slice(2, 10).toUpperCase();
-    }
-
     function maskPaymentMethod() {
       if (currentPayMethod === 'card') {
         const number = document.getElementById('cardNumber').value.replace(/\s/g, '');

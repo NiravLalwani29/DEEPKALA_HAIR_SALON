@@ -176,6 +176,19 @@ $currentPlan = $_SESSION['membership'] ?? 'none';
 
     .plan-card.gold { border-color: var(--gold-glow); box-shadow: 0 10px 30px rgba(255, 214, 102, 0.08); }
 
+    /* gold shimmer: sweeps across the Gold card every ~6s, one-time shine on member badge/button */
+    .plan-card.gold { overflow: hidden; }
+    .plan-card.gold::after, .btn-choose-plan.current::after, .nav-member-badge::after {
+      content: ''; position: absolute; top: -20%; bottom: -20%; left: 0; width: 18%; pointer-events: none; opacity: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,214,102,0.34), transparent);
+      transform: translateX(-180%) skewX(-12deg);
+    }
+    .plan-card.gold::after { animation: goldSweep 6s 0.6s ease-out infinite; }
+    .btn-choose-plan.current, .nav-member-badge { position: relative; overflow: hidden; }
+    .btn-choose-plan.current::after, .nav-member-badge::after { background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent); animation: goldSweep 1.1s 0.8s ease-out 1; }
+    @keyframes goldSweep { 0% { opacity: 0; transform: translateX(-180%) skewX(-12deg); } 10% { opacity: 0.8; } 25%, 100% { opacity: 0; transform: translateX(620%) skewX(-12deg); } }
+    @media (prefers-reduced-motion: reduce) { .plan-card.gold::after, .btn-choose-plan.current::after, .nav-member-badge::after { display: none; } }
+
     .plan-badge-corner {
       position: absolute; top: 0; right: 0;
       background-color: var(--gold-glow);

@@ -3,7 +3,8 @@ function send_mail($to, $subject, $body) {
     if (MAIL_URL !== '') {
         $r = @file_get_contents(MAIL_URL . '?' . http_build_query(['key' => MAIL_KEY, 'to' => $to, 'subject' => $subject, 'body' => $body]),
             false, stream_context_create(['http' => ['timeout' => 15]]));
-        return $r !== false && trim($r) === 'ok';
+        if ($r !== false && trim($r) === 'ok') return true;
+        if (SMTP_PASS === '') return false;
     }
     $s = @stream_socket_client('ssl://smtp.gmail.com:465', $en, $es, 10);
     if (!$s) return false;

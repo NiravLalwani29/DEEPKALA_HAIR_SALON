@@ -43,6 +43,8 @@ if ($act === 'verify') {
         q($conn, "UPDATE password_resets SET tries = tries + 1 WHERE email = ?", $email);
         out(false, 'Wrong OTP.');
     }
+    $cur = row(q($conn, "SELECT password FROM users WHERE email = ?", $email));
+    if ($cur && $cur['password'] === $pw) out(false, 'This is your previously used password. Please choose a new one.');
     q($conn, "UPDATE users SET password = ? WHERE email = ?", $pw, $email);
     q($conn, "DELETE FROM password_resets WHERE email = ?", $email);
     unset($_SESSION['fp_email']);

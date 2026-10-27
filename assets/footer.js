@@ -7,6 +7,7 @@ document.addEventListener('submit', async (e) => {
   b.textContent = 'Sending…';
   try {
     const d = await (await fetch('backend/subscribe.php', { method: 'POST', body: new FormData(f) })).json();
+    if (d.login) return location.href = 'login.php?redirect=' + location.pathname.split('/').pop();
     b.textContent = d.msg;
     if (d.ok) return f.email.readOnly = true;
   } catch {

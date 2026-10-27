@@ -66,7 +66,7 @@ if ($subEmail !== '' && isset($conn)) {
           <form class="dk-ft-form">
             <label class="dk-ft-input">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18a1 1 0 011 1v.4l-10 6.3L2 6.4V6a1 1 0 011-1zm-1 4l10 6.3L22 9v9a1 1 0 01-1 1H3a1 1 0 01-1-1V9z"/></svg>
-              <input type="email" name="email" placeholder="Enter your Email" aria-label="Email address" autocomplete="email" value="<?= htmlspecialchars($subEmail) ?>" required<?= $subbed ? ' readonly' : '' ?>>
+              <input type="email" name="email" placeholder="Enter your Email" aria-label="Email address" autocomplete="email" value="<?= htmlspecialchars($subEmail) ?>" <?= $subbed ? ' readonly' : '' ?>>
             </label>
             <button type="submit"<?= $subbed ? ' disabled' : '' ?>><?= $subbed ? 'Subscribed' : 'Subscribe' ?></button>
           </form>
@@ -90,4 +90,4 @@ if ($subEmail !== '' && isset($conn)) {
       </div>
     </div>
   </footer>
-<script src="assets/footer.js" defer></script>
+<script src="assets/footer.js?v=<?= filemtime(__DIR__ . '/../assets/footer.js') ?>" defer></script>

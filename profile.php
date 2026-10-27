@@ -922,7 +922,6 @@ $profileData = [
         const past = appts.filter((a) => a.status === 'cancelled' || a.ts < now).sort((x, y) => y.ts - x.ts);
 
         // Only appointments the salon has APPROVED count towards what the customer has spent.
-        // (First visit Rs 350 approved -> 350; second visit Rs 450 approved -> 800.)
         const approved = appts.filter((a) => a.status === 'approved');
         const completed = approved.filter((a) => a.ts < now).sort((x, y) => y.ts - x.ts);
 

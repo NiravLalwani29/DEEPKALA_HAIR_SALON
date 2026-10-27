@@ -17,8 +17,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
   {"@context":"https://schema.org","@type":"HairSalon","name":"Deepkala Hair Salon","telephone":"+919924620958","priceRange":"₹","address":{"@type":"PostalAddress","streetAddress":"2 Jayvimal Society, Cadila Road, Ghodasar","addressLocality":"Ahmedabad","postalCode":"380050","addressCountry":"IN"},"openingHours":"Mo-Su 09:00-21:00"}
   </script>
 
-  <link rel="preconnect" href="https://images.unsplash.com">
-  <link rel="preload" as="image" href="https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=1600&q=70&auto=format&fit=crop">
+  <link rel="preload" as="image" href="assets/about-hero.jpg">
   <link rel="icon" type="image/png" href="assets/deepkala-emblem.png">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -263,7 +262,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
 
     .ab-hero-bg {
       position: absolute; inset: 0;
-      background: url('https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=1600&q=70&auto=format&fit=crop') center 30% / cover no-repeat;
+      background: url('assets/about-hero.jpg') center 45% / cover no-repeat;
       filter: grayscale(20%) contrast(1.05);
       transform: scale(1.02);
     }
@@ -678,7 +677,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
 
     .ab-visit-image {
       min-height: 280px;
-      background: url('https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=1200&q=70&auto=format&fit=crop') center / cover no-repeat;
+      background: url('assets/about-visit.jpg') center / cover no-repeat;
       filter: grayscale(10%) contrast(1.05);
     }
 
